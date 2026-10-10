@@ -26,7 +26,7 @@ border-radius:50%;pointer-events:none}
 <div id="hint">Drag to orbit &nbsp;·&nbsp; Scroll / pinch to zoom</div>
 <script>
 const P=55*Math.PI/180, F=900;
-let A=0.6, CAMD=1500, CX=innerWidth/2, CY=innerHeight/2-30, auto=true, lastT=0;
+let A=0.6, CAMD=1500, CX=innerWidth/2, CY=innerHeight/2-30, auto=false, lastT=0;
 const floor=document.getElementById('floor'), stage=document.getElementById('stage');
 const ents=[];
 function mk(img,w,ar){const d=document.createElement('div');d.className='ent';
@@ -52,13 +52,13 @@ const bp=proj(e.x,e.y,0);
 e.sh.style.left=(bp.x-sw/2)+'px';e.sh.style.top=(bp.y-sw*0.16)+'px';
 e.sh.style.zIndex=Math.round(19999-p.d);}
 let down=false,lx=0;
-addEventListener('pointerdown',e=>{down=true;lx=e.clientX;auto=false;});
+addEventListener('pointerdown',e=>{down=true;lx=e.clientX;});
 addEventListener('pointermove',e=>{if(down){A+=(e.clientX-lx)*0.008;lx=e.clientX;}});
 addEventListener('pointerup',()=>down=false);
 addEventListener('wheel',e=>{CAMD=Math.min(2400,Math.max(900,CAMD+e.deltaY));auto=false;},{passive:true});
 addEventListener('resize',()=>{CX=innerWidth/2;CY=innerHeight/2-30;});
 function frame(t){const dt=Math.min(0.05,(t-lastT)/1000||0.016);lastT=t;
-if(auto)A+=dt*0.12;
+/* camera never auto-moves */
 const bx=170*Math.sin(t*0.00045),by=170*Math.sin(t*0.00031+1);
 hero.x=bx;hero.y=by;hero.z=0;place(hero,proj(bx,by,0));
 hexes.forEach((h,i)=>{const hx=320*Math.sin(t*0.0004+i*1.7),hy=320*Math.cos(t*0.00033+i*2.3);
