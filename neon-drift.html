@@ -113,7 +113,7 @@ h1.title{font-size:52px;font-weight:900;font-style:italic;letter-spacing:2px;lin
   <button class="btn pink" id="b-trial">TIME TRIAL</button>
   <button class="btn green" id="b-daily">DAILY · <span id="m-daily">PLAY TODAY</span></button>
   <button class="btn" id="b-garage">GARAGE · <span id="m-car">VOLT</span></button>
-  <div class="hint">DRAG anywhere to steer &amp; drift — release to bank combo + fire nitro.<br>Near misses &amp; gates charge your run. Don't kiss the traffic.</div>
+  <div class="hint">DRAG anywhere to steer &amp; drift — release to bank combo + fire nitro.<br>Near misses &amp; gates charge your run. Don't kiss the traffic.<br>⌨️ WASD/arrows steer · W speed up · S/SPACE brake · SHIFT bank+nitro</div>
   <button id="b-mute" aria-label="mute">🔊</button>
 </div>
 
@@ -422,6 +422,8 @@ Game.prototype.reset = function () {
   this.spawnT = 0; this.gateT = TUNE.gateEvery * 0.6;
   this.crashT = 0; this.shake = 0; this.flash = 0; this.flashText = '';
   this.touching = false; this.touchStartX = 0; this.touchX = 0; this.prevSteer = 0;
+  this.keys = { left: false, right: false, up: false, down: false };
+  this.keyActive = false; this.lastFreeLane = -1; this.spdNow = 0;
   this.trialT = 0; this.coinsEarned = 0; this.newBest = false;
   this.roadScroll = 0; this.paused = false;
   this.carDef = carById(this.save.selectedCar);
@@ -453,19 +455,36 @@ Game.prototype.startRun = function (mode, seed) {
 };
 
 Game.prototype.spawnRow = function (initial) {
-  var lanes = [0, 1, 2, 3];
-  // shuffle, keep one lane free so there's always a gap
+  // pick a free lane that is REACHABLE from the previous row's free lane
+  // (max one lane of sideways travel between rows) so the road can never
+  // be walled off; then fill the other lanes with traffic, staggered
+  // vertically so cars never overlap each other.
+  var freeLane;
+  if (this.lastFreeLane === undefined || this.lastFreeLane < 0) {
+    freeLane = Math.floor(this.rng() * TUNE.lanes);
+  } else {
+    var near = [];
+    for (var l = 0; l < TUNE.lanes; l++) {
+      if (Math.abs(l - this.lastFreeLane) <= 1) near.push(l);
+    }
+    freeLane = near[Math.floor(this.rng() * near.length)];
+  }
+  this.lastFreeLane = freeLane;
+  var lanes = [];
+  for (var l2 = 0; l2 < TUNE.lanes; l2++) if (l2 !== freeLane) lanes.push(l2);
+  // shuffle the filled lanes
   for (var i = lanes.length - 1; i > 0; i--) {
     var j = Math.floor(this.rng() * (i + 1)), tmp = lanes[i]; lanes[i] = lanes[j]; lanes[j] = tmp;
   }
   var count = 1 + Math.floor(this.rng() * (this.t < 45 ? 2 : 3));
+  count = Math.min(count, lanes.length);
   var y = initial ? (-80 - this.rng() * this.H * 0.55) : -120;
   for (var k = 0; k < count; k++) {
     var lane = lanes[k];
     var kind = this.rng();
     var wide = kind < 0.18, speeder = !wide && kind > 0.72;
     this.traffic.push({
-      lane: lane, x: this.laneX(lane), y: y - k * 40,
+      lane: lane, x: this.laneX(lane), y: y - k * 150,
       w: wide ? 76 : 50, h: wide ? 110 : 88,
       color: TRAFFIC_COLORS[Math.floor(this.rng() * TRAFFIC_COLORS.length)],
       wide: wide, speeder: speeder,
@@ -540,6 +559,13 @@ Game.prototype.update = function (rawDt) {
   this.speed = Math.min(targetMax, TUNE.baseSpeed * this.topMult + this.t * TUNE.speedRamp);
   var spd = this.speed * (this.boostT > 0 ? TUNE.boostMult : 1);
   if (this.boostT > 0) { this.boostT -= dt; this.nitro = Math.max(0, this.nitro - dt * 8); }
+  // keyboard: W/Up = speed up, S/Down/Space = brake
+  var keySteer = ((this.keys.right ? 1 : 0) - (this.keys.left ? 1 : 0));
+  this.keyActive = keySteer !== 0;
+  if (this.keyActive) this.steer = keySteer;
+  if (this.keys.up) spd = Math.min(spd * 1.3, TUNE.maxSpeed * this.topMult * 1.5);
+  if (this.keys.down) spd *= 0.55;
+  this.spdNow = spd;
   this.speedNorm = clamp((spd - TUNE.baseSpeed) / (TUNE.maxSpeed * 1.45 - TUNE.baseSpeed), 0, 1);
   this.roadScroll = (this.roadScroll + spd * dt) % 48;
   Sfx.engine(true, this.speedNorm);
@@ -559,7 +585,8 @@ Game.prototype.update = function (rawDt) {
 
   // drift state: hard steering at speed, or flick
   var steerMag = Math.abs(this.steer);
-  var wantDrift = this.touching && (steerMag > 0.55 || this.flick > 0.35) && spd > 250;
+  var driving = this.touching || this.keyActive;
+  var wantDrift = driving && (steerMag > 0.55 || this.flick > 0.35) && spd > 250;
   this.driftIntensity = lerp(this.driftIntensity, wantDrift ? clamp(steerMag * 1.15, 0, 1) : 0, Math.min(1, dt * (wantDrift ? 7 : 4)));
   this.drifting = this.driftIntensity > 0.25;
   if (this.drifting) {
@@ -596,7 +623,18 @@ Game.prototype.update = function (rawDt) {
 
 Game.prototype.updateTraffic = function (dt, spd) {
   var py = this.playerY();
-  for (var i = this.traffic.length - 1; i >= 0; i--) {
+  // car-following: a faster car slows behind a slower car in the same lane
+  // instead of ghosting straight through it
+  var n = this.traffic.length, i, j, a, b;
+  for (i = 0; i < n; i++) {
+    a = this.traffic[i]; a.ev = a.v;
+    for (j = 0; j < n; j++) {
+      if (j === i) continue;
+      b = this.traffic[j];
+      if (Math.abs(a.lane - b.lane) < 0.6 && b.y < a.y && (a.y - b.y) < 150 && b.v < a.ev) a.ev = b.v;
+    }
+  }
+  for (i = n - 1; i >= 0; i--) {
     var c = this.traffic[i];
     // lane changing (telegraphed with blinker)
     c.changeT -= dt;
@@ -612,7 +650,7 @@ Game.prototype.updateTraffic = function (dt, spd) {
       if (c.blinker <= 0) c.lane = c.targetLane;
     }
     c.wobble += dt * 2;
-    c.y += (spd - c.v * (this.boostT > 0 ? 0.85 : 1)) * dt;
+    c.y += (spd - (c.ev !== undefined ? c.ev : c.v) * (this.boostT > 0 ? 0.85 : 1)) * dt;
     c.x += Math.sin(c.wobble) * c.wobAmp * dt * 10;
     // near-miss: crossed player y with a close-but-clean lateral gap
     if (!c.passed && c.y > py) {
@@ -1199,6 +1237,24 @@ function boot() {
   });
   canvas.addEventListener('mousemove', function (e) { if (game.touching) game.touchMove(e.clientX); });
   canvas.addEventListener('mouseup', function () { game.touchEnd(); });
+  // keyboard — WASD / arrows. W/Up: speed up, S/Down/Space: brake, Shift: bank combo + fire nitro
+  function setKey(code, down) {
+    var k = game.keys;
+    if (code === 'KeyA' || code === 'ArrowLeft') k.left = down;
+    else if (code === 'KeyD' || code === 'ArrowRight') k.right = down;
+    else if (code === 'KeyW' || code === 'ArrowUp') k.up = down;
+    else if (code === 'KeyS' || code === 'ArrowDown' || code === 'Space') k.down = down;
+    else return false;
+    return true;
+  }
+  document.addEventListener('keydown', function (e) {
+    if (setKey(e.code, true)) e.preventDefault();
+    if ((e.code === 'ShiftLeft' || e.code === 'ShiftRight') && !e.repeat) {
+      Sfx.init(); Sfx.resume();
+      if (game.phase === 'run' && !game.paused) game.bankCombo(game.nitro >= TUNE.nitroFireMin);
+    }
+  });
+  document.addEventListener('keyup', function (e) { setKey(e.code, false); });
 
   document.addEventListener('visibilitychange', function () {
     if (document.hidden && game.phase === 'run' && !game.paused) {
