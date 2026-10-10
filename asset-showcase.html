@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>🎨 Asset Showcase — Vampire Slayers</title>
+<title>🎨 Asset Library — Vampire Slayers</title>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;background:#14101d;color:#efe9ff;font-family:-apple-system,system-ui,sans-serif;padding:16px;max-width:1100px;margin:0 auto}
@@ -27,12 +27,23 @@ h1{font-size:22px;margin:8px 0 2px}
 #light .cap{text-align:center;margin-top:10px;font-size:14px;color:#cfc4ee}
 #light .x{position:absolute;top:14px;right:18px;font-size:28px;color:#fff;cursor:pointer;padding:8px}
 .count{font-size:12px;color:#a99ec7;margin:10px 0}
+#grid.turntable .card{perspective:700px;background:#12101c}
+#grid.turntable .spin{transform-style:preserve-3d;animation:turn 9s linear infinite}
+#grid.turntable .card img{height:210px;object-fit:contain;background:radial-gradient(ellipse at 50% 70%,#241d38 0%,#0d0a14 75%)}
+#grid.turntable .card .meta{text-align:center}
+@keyframes turn{from{transform:rotateY(0deg)}to{transform:rotateY(360deg)}}
 a.home{color:#9d8cff;font-size:13px}
 </style>
 </head>
 <body>
-<h1>🎨 Asset Showcase</h1>
-<div class="sub">Every model's take on the same 4 assets — pick the styles you like for Vampire Slayers v1.1</div>
+<h1>🎨 Asset Library</h1>
+<div class="sub">Every model's take on the game assets — browse flat, or spin them in 3D</div>
+<div class="filters">
+<div class="fgroup"><span class="flabel">View:</span>
+<button class="chip on" data-f="view" data-v="spread">🖼️ Spread</button>
+<button class="chip" data-f="view" data-v="turn">🔄 3D Turntable</button>
+</div>
+</div>
 <div class="filters">
 <div class="fgroup"><span class="flabel">Maker:</span>
 <button class="chip on" data-f="seat" data-v="all">All</button>
@@ -90,15 +101,17 @@ const A=[
 ['muse','map','assets/showcase/muse2-map.webp','Crypt Arena'],
 ['muse','follower','assets/showcase/muse2-follower.webp','Brannoc the Emberward'],
 ];
-const f={seat:'all',type:'all'};
+const f={seat:'all',type:'all',view:'spread'};
 function render(){
  const g=document.getElementById('grid');g.innerHTML='';
+ g.classList.toggle('turntable',f.view==='turn');
  let n=0;
  A.forEach(a=>{
   if((f.seat==='all'||a[0]===f.seat)&&(f.type==='all'||a[1]===f.type)){
    n++;
    const d=document.createElement('div');d.className='card';
-   d.innerHTML='<span class="badge">'+SEATS[a[0]]+'</span><img loading="lazy" src="'+a[2]+'" alt="'+a[3]+'"><div class="meta"><div class="t">'+a[3]+'</div><div class="s">'+a[1]+' · cartoon-realistic</div></div>';
+   const delay=(Math.random()*-9).toFixed(2);
+   d.innerHTML='<span class="badge">'+SEATS[a[0]]+'</span><div class="spin" style="animation-delay:'+delay+'s"><img loading="lazy" src="'+a[2]+'" alt="'+a[3]+'"></div><div class="meta"><div class="t">'+a[3]+'</div><div class="s">'+a[1]+' · cartoon-realistic</div></div>';
    d.onclick=()=>{document.getElementById('limg').src=a[2];document.getElementById('lcap').textContent=SEATS[a[0]]+' · '+a[3]+' ('+a[1]+')';document.getElementById('light').classList.add('show');};
    g.appendChild(d);
   }
