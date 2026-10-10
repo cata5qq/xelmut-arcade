@@ -84,7 +84,8 @@ const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x05060c);
 scene.fog=new THREE.Fog(0x05060c,48,100);
 const camera=new THREE.PerspectiveCamera(45,innerWidth/innerHeight,0.1,150);
-const renderer=new THREE.WebGLRenderer({antialias:true});
+const renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));
 renderer.setSize(innerWidth,innerHeight);
 renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.outputEncoding=THREE.sRGBEncoding;
@@ -107,7 +108,10 @@ gtex.encoding=THREE.sRGBEncoding;gtex.wrapS=gtex.wrapT=THREE.RepeatWrapping;gtex
 const groundMat=new THREE.MeshStandardMaterial({map:gtex,roughness:0.95});
 const ground=new THREE.Mesh(new THREE.PlaneGeometry(90,90),groundMat);
 ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
-const rockMat=new THREE.MeshStandardMaterial({color:0x3d4048,roughness:0.95});
+const rockMat=new THREE.MeshLambertMaterial({color:0x3d4048});
+const SH_GEO=new THREE.CircleGeometry(1,20);
+const SH_MAT=new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:0.45,depthWrite:false});
+const _ct=new THREE.Vector3(); // camera temp (no per-frame alloc)
 for(let i=0;i<18;i++){const r=new THREE.Mesh(new THREE.DodecahedronGeometry(0.25+Math.random()*0.5,0),rockMat);
  r.position.set((Math.random()-.5)*70,0.2,(Math.random()-.5)*60);r.castShadow=r.receiveShadow=true;scene.add(r);}
 function J(parent,x,y,z){const o=new THREE.Object3D();o.position.set(x,y,z);parent.add(o);return o;}
@@ -187,8 +191,7 @@ function makeUnit(tkey,w,h,tint,rigKind){
  const g=new THREE.Group();scene.add(g);
  const mat=new THREE.SpriteMaterial({map:TEX[tkey],transparent:true,alphaTest:0.05,color:tint||0xffffff});
  const sp=new THREE.Sprite(mat);sp.scale.set(w,h,1);sp.position.y=h/2;g.add(sp);
- const sh=new THREE.Mesh(new THREE.CircleGeometry(w*0.34,20),
-  new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:0.45,depthWrite:false}));
+ const sh=new THREE.Mesh(SH_GEO,SH_MAT);sh.scale.set(w*0.34,w*0.34,1);
  sh.rotation.x=-Math.PI/2;sh.position.y=0.04;g.add(sh);
  const u={g,sp,sh,mat,w,h,ph:Math.random()*6,baseCol:tint||0xffffff,weapon:null,wpivot:null};
  if(rigKind==='sword'){const sw=makeSwordRig(false);sw.position.set(1.0,1.15,0.25);g.add(sw);u.wpivot=sw;}
@@ -214,8 +217,8 @@ const HEROES={
 const WEAPONS={
  dawnbrand:{name:'Dawnbrand',icon:'🗡️',kind:'melee',lv:[null,{dmg:22,cd:0.9,radius:3.2},{dmg:32,cd:0.82,radius:3.4},{dmg:44,cd:0.75,radius:3.6},{dmg:60,cd:0.68,radius:3.9},{dmg:80,cd:0.6,radius:4.2}]},
  longbow:{name:'Swiftbow',icon:'🏹',kind:'arrow',lv:[null,{dmg:18,cd:0.8,count:1,pierce:3},{dmg:28,cd:0.74,count:1,pierce:3},{dmg:40,cd:0.68,count:2,pierce:4},{dmg:56,cd:0.62,count:2,pierce:5},{dmg:76,cd:0.56,count:3,pierce:6}]},
- stake:{name:'Stake Launcher',icon:'🪵',kind:'stake',evo:{name:'Ballista of Dawn',icon:'🏹'},lv:[null,{dmg:16,cd:0.7,count:1,pierce:0},{dmg:24,cd:0.62,count:2,pierce:0},{dmg:34,cd:0.55,count:2,pierce:1},{dmg:48,cd:0.48,count:3,pierce:1},{dmg:64,cd:0.4,count:4,pierce:2}]},
- emberlob:{name:'Emberlob',icon:'🔥',kind:'fire',evo:{name:'Cindercrown Comet',icon:'☄️'},lv:[null,{dmg:26,cd:1.1,burn:6,aoe:2.2},{dmg:40,cd:1.0,burn:9,aoe:2.5},{dmg:58,cd:0.92,burn:13,aoe:2.8},{dmg:80,cd:0.84,burn:18,aoe:3.1},{dmg:105,cd:0.75,burn:26,aoe:3.6,split:3}]},
+ stake:{name:'Stake Launcher',icon:'🪵',kind:'stake',evo:{name:'Ballista of Dawn',icon:'🏹'},evoNeeds:'hands',lv:[null,{dmg:16,cd:0.7,count:1,pierce:0},{dmg:24,cd:0.62,count:2,pierce:0},{dmg:34,cd:0.55,count:2,pierce:1},{dmg:48,cd:0.48,count:3,pierce:1},{dmg:64,cd:0.4,count:4,pierce:2}]},
+ emberlob:{name:'Emberlob',icon:'🔥',kind:'fire',evo:{name:'Cindercrown Comet',icon:'☄️'},evoNeeds:'whet',lv:[null,{dmg:26,cd:1.1,burn:6,aoe:2.2},{dmg:40,cd:1.0,burn:9,aoe:2.5},{dmg:58,cd:0.92,burn:13,aoe:2.8},{dmg:80,cd:0.84,burn:18,aoe:3.1},{dmg:105,cd:0.75,burn:26,aoe:3.6,split:3}]},
  arcanebolt:{name:'Arcane Bolt',icon:'🔮',kind:'bolt',lv:[null,{dmg:14,cd:0.7,count:2},{dmg:22,cd:0.65,count:2},{dmg:32,cd:0.6,count:3},{dmg:46,cd:0.55,count:3},{dmg:64,cd:0.5,count:4}]},
  spiritbolt:{name:'Spirit Bolt',icon:'👻',kind:'spirit',lv:[null,{dmg:16,cd:0.75,count:1},{dmg:25,cd:0.7,count:1},{dmg:36,cd:0.65,count:2},{dmg:50,cd:0.6,count:2},{dmg:70,cd:0.55,count:3}]},
  runhmaul:{name:'Runhmaul',icon:'🔨',kind:'hammer',lv:[null,{dmg:26,cd:1.1,radius:4.0},{dmg:38,cd:1.0,radius:4.2},{dmg:54,cd:0.92,radius:4.4},{dmg:74,cd:0.84,radius:4.7},{dmg:98,cd:0.76,radius:5.0}]}
@@ -235,7 +238,8 @@ const ARENAS={crypt:{name:'Moonlit Crypt',tint:0xffffff,fog:0x05060c},
  village:{name:'Burnt Village',tint:0xffc088,fog:0x0f0a06}};
 // ===== GAME STATE =====
 const G={t:0,level:1,xp:0,xpNext:8,kills:0,over:false,paused:false,started:false,armor:0,dmgMul:1,
- heroType:'slayer',arena:'crypt',wlvl:1,evolved:false,
+ heroType:'slayer',arena:'crypt',weapons:[],boosts:{},pendingLevels:0,draftOpen:false,critCh:0,shield:0,
+ invisT:0,immuneT:0,vanishCd:0,borrowed:false,sunblinkT:0,
  hero:{hp:135,maxHp:135,speed:6.4,pickup:2.4,cd:0,atkT:0,face:0,moving:false},
  enemies:[],gems:[],bosses:{dul:false,bur:false,ora:false},
  charms:[],imp:null,totems:[],runes:[],burstT:0,totemT:0,runeT:0};
@@ -261,7 +265,8 @@ Object.entries(ARENAS).forEach(([k,a])=>{
  arenaChips.appendChild(d);
 });
 onTap(document.getElementById('startbtn'),e=>startGame());
-function wstats(){return WEAPONS[HEROES[G.heroType].weapon].lv[G.wlvl];}
+function wstats(w){return WEAPONS[w.id].lv[w.lvl];}
+function xpForLevel(l){return Math.floor(4*Math.pow(l,1.35)+4);}
 function startGame(){
  const H0=HEROES[G.heroType],H=G.hero;
  H.maxHp=H0.hp;H.hp=H0.hp;H.speed=H0.speed;
@@ -270,8 +275,8 @@ function startGame(){
  groundMat.color.setHex(A.tint);scene.fog.color.setHex(A.fog);scene.background.setHex(A.fog);
  document.getElementById('start').style.display='none';
  document.getElementById('wname').textContent=H0.icon+' '+H0.name;
- document.getElementById('wpill').textContent=WEAPONS[H0.weapon].name+' 1';
  G.burstT=H0.burstCd||0;G.totemT=H0.totemCd||0;G.runeT=H0.runeCd||0;
+ G.weapons=[{id:H0.weapon,lvl:1,cd:0,evo:false}];G.xpNext=xpForLevel(1);updateWpill();
  if(G.heroType==='necro'){ // 3 Moonmoth Charms
   for(let i=0;i<3;i++){
    const m=new THREE.Mesh(new THREE.SphereGeometry(0.14,10,8),
@@ -369,12 +374,19 @@ const gemGeo=new THREE.OctahedronGeometry(0.24);
 const gemMat=new THREE.MeshStandardMaterial({color:0x33ccff,emissive:0x2288ff,emissiveIntensity:1.8,roughness:0.2,metalness:0.4});
 const projs=[];
 const _pw=new THREE.Vector3();
+const projPool=[];
+function acquireProj(kind,col){
+ for(const p of projPool)if(!p.used&&p.kind===kind&&p.col===col){p.used=true;p.m.visible=true;return p.m;}
+ const geo=kind==='bolt'?new THREE.SphereGeometry(0.16,10,8):kind==='stake'?new THREE.BoxGeometry(0.7,0.06,0.06):new THREE.BoxGeometry(0.5,0.07,0.07);
+ const m=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:col}));
+ scene.add(m);projPool.push({kind:kind,col:col,m:m,used:true});return m;}
+function releaseProj(m){m.visible=false;for(const p of projPool)if(p.m===m){p.used=false;break;}}
 function fireProj(x,y,z,tx,tz,dmg,opt){
  opt=opt||{};
  const col=opt.col||0xffcc44;
- const geo=opt.bolt?new THREE.SphereGeometry(0.16,10,8):opt.stake?new THREE.BoxGeometry(0.7,0.06,0.06):new THREE.BoxGeometry(0.5,0.07,0.07);
- const m=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:col}));
- m.position.set(x,y,z);scene.add(m);
+ const kind=opt.bolt?'bolt':opt.stake?'stake':'arrow';
+ const m=acquireProj(kind,col);
+ m.position.set(x,y,z);
  _pw.set(tx-x,0,tz-z);const d=_pw.length()||1,sp=opt.speed||16;
  const pr={m,vx:_pw.x/d*sp,vz:_pw.z/d*sp,dmg,aoe:opt.aoe||0,pierce:opt.pierce||0,burn:opt.burn||0,
   life:(opt.range||12)/sp,hit:new Set(),foe:!!opt.foe};
@@ -382,9 +394,17 @@ function fireProj(x,y,z,tx,tz,dmg,opt){
  projs.push(pr);return pr;
 }
 function hurtHero(amt){
- const H=G.hero;amt*=(1-G.armor);
- H.hp-=amt;dmgNum(heroU.g.position.x,2.8,heroU.g.position.z,'-'+Math.round(amt),'#ff6b6b');
- if(H.hp<=0){H.hp=0;gameOver();}
+ const H=G.hero;
+ if(G.immuneT>0||G.invisT>0)return;
+ amt*=(1-G.armor);
+ if(G.shield>0){const ab=Math.min(G.shield,amt);G.shield-=ab;amt-=ab;}
+ H.hp-=amt;
+ dmgNum(heroU.g.position.x,2.8,heroU.g.position.z,'-'+Math.round(amt),'#ff6b6b');
+ if(H.hp<=0){
+  if(G.boosts.borrowtime&&!G.borrowed){G.borrowed=true;H.hp=1;warn('⏳ BORROWED TIME');return;}
+  H.hp=0;gameOver();return;
+ }
+ if(G.boosts.vanishwink&&G.vanishCd<=0){G.vanishCd=120;G.invisT=5;G.immuneT=1;}
 }
 function hurtEnemy(e,dmg,opts){
  if(e.dead)return;
@@ -394,30 +414,98 @@ function hurtEnemy(e,dmg,opts){
  if(H0.undeadBonus&&e.undead)dmg*=H0.undeadBonus;
  if(H0.closeBonus&&opts.dist!=null&&opts.dist<H0.closeRange)dmg*=H0.closeBonus;
  dmg*=G.dmgMul;
+ let crit=false;
+ if(Math.random()<G.critCh){dmg*=2;crit=true;}
+ const over=Math.max(0,dmg-e.hp);
  e.hp-=dmg;e.flash=0.12;
  if(opts.burn)e.burn={dmg:opts.burn,t:3};
- dmgNum(e.u.g.position.x,2.2,e.u.g.position.z,Math.round(dmg),'#ffe9a8');
- if(e.hp<=0)killEnemy(e);
+ dmgNum(e.u.g.position.x,2.2,e.u.g.position.z,Math.round(dmg)+(crit?'!':''),crit?'#ffd60a':'#ffe9a8');
+ if(e.hp<=0){
+  if(G.boosts.bloodpact)G.shield=Math.min(60,G.shield+over*0.1*G.boosts.bloodpact);
+  killEnemy(e);
+ }
 }
-// ===== upgrades =====
-function levelUp(){
- G.paused=true;
- const W=WEAPONS[HEROES[G.heroType].weapon];
- const ups=[['⚔️','Damage +25%',()=>G.dmgMul*=1.25],
-  ['⚡','Attack speed +20%',()=>G.atkMul=(G.atkMul||1)*1.2],
-  ['❤️','Max HP +30 & heal',()=>{G.hero.maxHp*=1.3;G.hero.hp=Math.min(G.hero.maxHp,G.hero.hp+G.hero.maxHp*0.3);}],
-  ['🥾','Move speed +15%',()=>G.hero.speed*=1.15],
-  ['🧲','Pickup range +40%',()=>G.hero.pickup*=1.4],
-  ['🛡️','Armor: take 12% less',()=>G.armor=Math.min(0.6,G.armor+0.12)]];
- if(G.wlvl<5)ups.push(['🔼',W.name+' +1 (Lv '+(G.wlvl+1)+')',()=>{G.wlvl++;}]);
- else if(W.evo&&!G.evolved)ups.push([W.evo.icon,'EVOLVE: '+W.evo.name,()=>{G.evolved=true;evoBanner(W.evo);}]);
- const picks=[...ups].sort(()=>Math.random()-.5).slice(0,3);
+// ===== upgrades: 2D draft system =====
+const BOOSTS={
+ boots:{name:'Swift Boots',icon:'🥾',desc:'+8% move speed',max:5,apply:()=>{G.hero.speed*=1.08;}},
+ whet:{name:'Whetstone',icon:'🪨',desc:'+10% damage',max:5,apply:()=>{G.dmgMul*=1.10;}},
+ hands:{name:'Quick Hands',icon:'🧤',desc:'+8% attack speed',max:5,apply:()=>{G.atkMul=(G.atkMul||1)*1.08;}},
+ shoe:{name:'Lucky Horseshoe',icon:'🍀',desc:'+7% crit chance',max:5,apply:()=>{G.critCh+=0.07;}},
+ heart:{name:'Big Heart',icon:'❤️',desc:'+25 max HP (heal 25)',max:5,apply:()=>{G.hero.maxHp+=25;G.hero.hp=Math.min(G.hero.maxHp,G.hero.hp+25);}},
+ magnet:{name:'Magnet Charm',icon:'🧲',desc:'+25% pickup range',max:5,apply:()=>{G.hero.pickup*=1.25;}},
+ bloodpact:{name:'Blood Pact',icon:'🩸',desc:'10% of overkill becomes shield',max:3,apply:()=>{}},
+ sunblink:{name:'Sunblink',icon:'☀️',desc:'AUTO every 30s: blinds fiends 2s',max:1,special:1,apply:()=>{}},
+ vanishwink:{name:'Vanishwink',icon:'👁️',desc:'When hit: invisible 5s + 1s immunity (2min cd)',max:1,special:1,apply:()=>{}},
+ borrowtime:{name:'Borrowed Time',icon:'⏳',desc:'Once per run: survive lethal hit at 1 HP',max:1,special:1,apply:()=>{}}
+};
+function draftPool(){
+ const pool=[];
+ const ownedW=G.weapons.map(w=>w.id);
+ if(G.weapons.length<5)for(const id of Object.keys(WEAPONS))if(!ownedW.includes(id))pool.push({kind:'newW',id:id,w:4});
+ for(const w of G.weapons){
+  const W=WEAPONS[w.id];
+  if(w.evo)continue;
+  if(w.lvl<5)pool.push({kind:'upW',id:w.id,w:4});
+  else if(W.evo&&G.boosts[W.evoNeeds])pool.push({kind:'evo',id:w.id,w:6});
+ }
+ const bks=Object.keys(G.boosts);
+ for(const id of Object.keys(BOOSTS)){
+  const B=BOOSTS[id],l=G.boosts[id]||0;
+  if(B.special&&l>0)continue;
+  if(l===0&&bks.length<9)pool.push({kind:'newB',id:id,w:B.special?3:2});
+  else if(l>0&&l<B.max&&!B.special)pool.push({kind:'upB',id:id,w:2});
+ }
+ pool.push({kind:'heal',id:'heal',w:1});
+ return pool;
+}
+function draftLabel(p){
+ if(p.kind==='newW')return[WEAPONS[p.id].icon,'New weapon:<br>'+WEAPONS[p.id].name];
+ if(p.kind==='upW'){const w=G.weapons.find(w=>w.id===p.id);return['🔼',WEAPONS[p.id].name+' → Lv '+(w.lvl+1)];}
+ if(p.kind==='evo')return[WEAPONS[p.id].evo.icon,'EVOLVE:<br>'+WEAPONS[p.id].evo.name];
+ if(p.kind==='newB'||p.kind==='upB'){const B=BOOSTS[p.id],l=(G.boosts[p.id]||0)+1;
+  return[B.icon,B.name+' '+l+'/'+B.max+'<br><small>'+B.desc+'</small>'];}
+ return['💚','Heal 50% HP'];
+}
+function updateWpill(){
+ const w0=G.weapons[0];if(!w0)return;const W=WEAPONS[w0.id];
+ document.getElementById('wpill').textContent='⚔️ '+G.weapons.length+'/5 · '+W.name+(w0.evo?' EVO':' '+w0.lvl);
+}
+function openDraft(){
+ // glitch fix: a queue — never rebuild cards under the player's finger
+ if(G.draftOpen)return;
+ G.draftOpen=true;G.paused=true;
+ const pool=draftPool(),picks=[];
+ let guard=0;
+ const forceW=G.weapons.length<2&&pool.some(p=>p.kind==='newW');
+ while(picks.length<3&&pool.length&&guard++<80){
+  let tot=0;for(const p of pool)tot+=p.w;
+  let r=Math.random()*tot,idx=0;
+  for(;idx<pool.length;idx++){r-=pool[idx].w;if(r<=0)break;}
+  idx=Math.min(idx,pool.length-1);
+  const p=pool.splice(idx,1)[0];
+  if(!picks.some(q=>q.kind===p.kind&&q.id===p.id))picks.push(p);
+ }
+ if(forceW&&!picks.some(p=>p.kind==='newW')){
+  const nw=pool.find(p=>p.kind==='newW');
+  if(nw)picks[picks.length-1]=nw;
+ }
  const ov=document.getElementById('lvlup');ov.style.display='flex';
+ document.querySelector('#lvlup h2').textContent='⬆️ LEVEL '+G.level+' — pick one'+(G.pendingLevels>1?' (x'+G.pendingLevels+')':'');
  const cards=document.getElementById('cards');cards.innerHTML='';
  picks.forEach(p=>{const d=document.createElement('div');d.className='card';
-  d.innerHTML='<div class="ci">'+p[0]+'</div><div>'+p[1]+'</div>';
-  onTap(d,ev=>{p[2]();ov.style.display='none';G.paused=false;
-   document.getElementById('wpill').textContent=W.name+(G.evolved?' EVO':' '+G.wlvl);});});
+  const lb=draftLabel(p);
+  d.innerHTML='<div class="ci">'+lb[0]+'</div><div>'+lb[1]+'</div>';
+  onTap(d,ev=>{applyDraft(p);});cards.appendChild(d);});
+}
+function applyDraft(p){
+ if(p.kind==='newW')G.weapons.push({id:p.id,lvl:1,cd:0,evo:false});
+ else if(p.kind==='upW'){const w=G.weapons.find(w=>w.id===p.id);w.lvl++;}
+ else if(p.kind==='evo'){const w=G.weapons.find(w=>w.id===p.id);w.evo=true;evoBanner(WEAPONS[p.id].evo);}
+ else if(p.kind==='newB'||p.kind==='upB'){G.boosts[p.id]=(G.boosts[p.id]||0)+1;BOOSTS[p.id].apply();}
+ else if(p.kind==='heal'){G.hero.hp=Math.min(G.hero.maxHp,G.hero.hp+G.hero.maxHp*0.5);}
+ G.pendingLevels--;updateWpill();
+ if(G.pendingLevels>0){G.draftOpen=false;openDraft();}
+ else{G.draftOpen=false;document.getElementById('lvlup').style.display='none';G.paused=false;}
 }
 function evoBanner(evo){
  const b=document.getElementById('evobanner');b.textContent='⚔️ '+evo.name.toUpperCase()+' AWAKENED ⚔️';
@@ -437,10 +525,11 @@ function nearestEnemy(maxD,meleeR){
 }
 function faceTarget(t){G.hero.face=Math.atan2(t.u.g.position.x-heroU.g.position.x,t.u.g.position.z-heroU.g.position.z);
  heroU.g.rotation.y=G.hero.face;}
-function heroAttack(){
- const H=G.hero,H0=HEROES[G.heroType],W=WEAPONS[H0.weapon],st=wstats();
+function fireWeapon(w){
+ const H=G.hero,H0=HEROES[G.heroType],W=WEAPONS[w.id],st=wstats(w);
+ const isStarter=(w.id===H0.weapon);
  const cdMul=1/(G.atkMul||1);
- H.cd=st.cd*cdMul;H.atkT=(W.kind==='melee'||W.kind==='hammer')?0.4:0.5;
+ w.cd=st.cd*cdMul;H.atkT=(W.kind==='melee'||W.kind==='hammer')?0.4:0.5;
  if(W.kind==='melee'||W.kind==='hammer'){
   const tgt=nearestEnemy(st.radius,true);
   if(tgt){faceTarget(tgt);heroU.g.rotation.y=H.face;}
@@ -461,7 +550,7 @@ function heroAttack(){
    const spread=(i-(n-1)/2)*0.35;
    const ang=Math.atan2(tgt.u.g.position.x-tip.x,tgt.u.g.position.z-tip.z)+spread;
    const tx=tip.x+Math.sin(ang)*10,tz=tip.z+Math.cos(ang)*10;
-   const evoB=G.evolved&&W.evo;
+   const evoB=w.evo&&W.evo;
    let dmg=st.dmg*(0.9+Math.random()*0.2)*(evoB?1.6:1);
    const opt={range:12,speed:W.kind==='fire'?13:18,pierce:(st.pierce||0)+(evoB?2:0)};
    if(W.kind==='arrow'){opt.col=0xffcc44;}
@@ -474,14 +563,18 @@ function heroAttack(){
   if(W.kind==='fire'||W.kind==='bolt'||W.kind==='spirit')ringFX(heroU.g.position.x,heroU.g.position.z,W.kind==='fire'?0xff7733:W.kind==='spirit'?0x77ffcc:0xaa66ff,2);
  }
  // weapon rig anim trigger
- if(heroU.wpivot)heroU.swingT=0.4;
- if(heroU.weapon&&(H0.rig==='bow'))heroU.drawT=0.5;
- if(heroU.weapon&&(H0.rig==='staff'||H0.rig==='staffFire'||H0.rig==='staffGhost'))heroU.castT=0.5;
+ if(isStarter&&heroU.wpivot)heroU.swingT=0.4;
+ if(isStarter&&heroU.weapon&&(H0.rig==='bow'))heroU.drawT=0.5;
+ if(isStarter&&heroU.weapon&&(H0.rig==='staff'||H0.rig==='staffFire'||H0.rig==='staffGhost'))heroU.castT=0.5;
 }
 // ===== main loop =====
 const clock=new THREE.Clock();const pv=new THREE.Vector3();const dmgNums=[];
-function dmgNum(x,y,z,txt,col){const d=document.createElement('div');d.className='dmg';d.textContent=txt;d.style.color=col;
- document.getElementById('app').appendChild(d);dmgNums.push({d,x,y,z,t:0});}
+const dmgPool=[];
+function dmgNum(x,y,z,txt,col){let d=null;
+ for(const q of dmgPool)if(!q.used){q.used=true;d=q.d;break;}
+ if(!d){d=document.createElement('div');d.className='dmg';document.getElementById('app').appendChild(d);dmgPool.push({d:d,used:true});}
+ d.textContent=txt;d.style.color=col;d.style.display='block';dmgNums.push({d:d,x:x,y:y,z:z,t:0});}
+function releaseDmg(n){n.d.style.display='none';for(const q of dmgPool)if(q.d===n.d){q.used=false;break;}}
 function proj(x,y,z){pv.set(x,y,z).project(camera);return{x:(pv.x*0.5+0.5)*innerWidth,y:(-pv.y*0.5+0.5)*innerHeight};}
 function dist2(a,b){return Math.hypot(a.x-b.x,a.z-b.z);}
 let uiT=0;
@@ -492,7 +585,7 @@ function frame(){
  updateFX(dt);
  if(!G.started||G.paused||G.over){renderer.render(scene,camera);return;}
  G.t+=dt;
- const alive=G.enemies.filter(e=>!e.dead).length;
+ let alive=0;for(const _e of G.enemies)if(!_e.dead)alive++;
  const want=Math.min(40,4+G.t/14);
  if(alive<want&&Math.random()<dt*Math.max(0.7,2.2-G.t/150))spawnEnemy(null);
  if(G.t>=300&&!G.bosses.dul){G.bosses.dul=true;spawnEnemy('dul');}
@@ -512,9 +605,11 @@ function frame(){
  heroU.sp.scale.set(heroU.w*hs,heroU.h*hs,1);
  // weapon anims
  if(heroU.swingT>0){heroU.swingT-=dt;const p=1-heroU.swingT/0.4;
-  heroU.wpivot.rotation.x=2.2-3.6*Math.sin(p*Math.PI);}
+  heroU.wpivot.rotation.x=2.2-3.6*Math.sin(p*Math.PI);
+  heroU.mat.rotation=0.18*Math.sin(p*Math.PI);}
  else if(heroU.wpivot){heroU.wpivot.rotation.x+=(0.5-heroU.wpivot.rotation.x)*Math.min(1,dt*8);
-  heroU.wpivot.rotation.z+=(-0.7-heroU.wpivot.rotation.z)*Math.min(1,dt*8);}
+  heroU.wpivot.rotation.z+=(-0.7-heroU.wpivot.rotation.z)*Math.min(1,dt*8);
+  heroU.mat.rotation+=(0-heroU.mat.rotation)*Math.min(1,dt*10);}
  if(heroU.drawT>0&&heroU.weapon){heroU.drawT-=dt;const p=1-heroU.drawT/0.5;
   heroU.weapon.g.rotation.x=-0.35-0.5*Math.sin(p*Math.PI);
   if(heroU.weapon.arrow)heroU.weapon.arrow.position.x=0.35-0.3*Math.sin(p*Math.PI);}
@@ -524,16 +619,18 @@ function frame(){
   heroU.weapon.orb.material.emissiveIntensity=1+4*Math.sin(p*Math.PI);}
  else if(heroU.weapon&&heroU.weapon.orb){heroU.weapon.g.rotation.x+=(0.3-heroU.weapon.g.rotation.x)*Math.min(1,dt*8);
   heroU.weapon.orb.material.emissiveIntensity=1.6;}
- // auto-attack
- if(H.cd<=0){
-  const st=wstats();
-  const isMelee=(WEAPONS[H0.weapon].kind==='melee'||WEAPONS[H0.weapon].kind==='hammer');
-  const range=isMelee?st.radius:10;
-  if(nearestEnemy(range,isMelee))heroAttack();
+ // auto-attacks: every owned weapon fires on its own cooldown (like 2D)
+ for(const w of G.weapons){
+  w.cd-=dt;
+  if(w.cd>0)continue;
+  const W2=WEAPONS[w.id],st2=wstats(w);
+  const isMelee=(W2.kind==='melee'||W2.kind==='hammer');
+  const range=isMelee?st2.radius:10;
+  if(nearestEnemy(range,isMelee))fireWeapon(w);else w.cd=0.12;
  }
  // specials
  if(H0.burstCd){G.burstT-=dt;
-  if(G.burstT<=0){G.burstT=H0.burstCd;const st=wstats();
+  if(G.burstT<=0){G.burstT=H0.burstCd;const st=wstats(G.weapons[0]);
    ringFX(heroU.g.position.x,heroU.g.position.z,0xbb66ff,6);shake(0.2,0.25);
    for(const e of G.enemies){if(e.dead)continue;
     if(dist2(heroU.g.position,e.u.g.position)<5.5)hurtEnemy(e,st.dmg*3*G.dmgMul,{});}}}
@@ -546,7 +643,7 @@ function frame(){
    g.position.set(heroU.g.position.x+(Math.random()-.5)*4,0,heroU.g.position.z+(Math.random()-.5)*4);
    scene.add(g);G.totems.push({g,t:0,cd:0});}}
  for(const tm of G.totems){tm.cd-=dt;
-  if(tm.cd<=0){tm.cd=1;const st=wstats();ringFX(tm.g.position.x,tm.g.position.z,0x77ffcc,2.5);
+  if(tm.cd<=0){tm.cd=1;const st=wstats(G.weapons[0]);ringFX(tm.g.position.x,tm.g.position.z,0x77ffcc,2.5);
    for(const e of G.enemies){if(e.dead)continue;
     if(dist2(tm.g.position,e.u.g.position)<4)hurtEnemy(e,st.dmg*0.8*G.dmgMul,{});}}}
  if(H0.runeCd){G.runeT-=dt;
@@ -560,6 +657,15 @@ function frame(){
   r.m.material.opacity=0.3+0.4*Math.abs(Math.sin(t*4));
   if(dist2(heroU.g.position,r.m.position)<3)G.dmgMul=1.5;
   if(r.t<=0){scene.remove(r.m);G.runes.splice(i,1);}}
+ // sunblink: auto-blind every 30s (2D)
+ if(G.boosts.sunblink){G.sunblinkT-=dt;
+  if(G.sunblinkT<=0){G.sunblinkT=30;
+   for(const e of G.enemies)if(!e.dead)e.stun=2;
+   ringFX(heroU.g.position.x,heroU.g.position.z,0xfff2cc,6);}}
+ if(G.invisT>0)G.invisT-=dt;
+ if(G.immuneT>0)G.immuneT-=dt;
+ if(G.vanishCd>0)G.vanishCd-=dt;
+ heroU.mat.opacity=G.invisT>0?0.35:1;
  // charms (necro)
  for(const c of G.charms){c.ang+=dt*2.2;
   c.m.position.set(heroU.g.position.x+Math.cos(c.ang)*1.6,1.2+Math.sin(t*3+c.ang)*0.2,heroU.g.position.z+Math.sin(c.ang)*1.6);
@@ -596,17 +702,19 @@ function frame(){
        p.dmg*0.4,{bolt:true,col:0xff7733,speed:12,range:7});}}}
     if(p.hit.size>p.pierce){dead=true;break;}
    }}
-  if(dead){scene.remove(p.m);projs.splice(i,1);}
+  if(dead){releaseProj(p.m);projs.splice(i,1);}
  }
  // enemies
  for(let i=G.enemies.length-1;i>=0;i--){const e=G.enemies[i];
   if(e.burn&&!e.dead){e.burn.t-=dt;e.burnTick=(e.burnTick||0)+dt;
    if(e.burnTick>0.5){e.burnTick=0;e.hp-=e.burn.dmg*0.5;e.flash=0.08;if(e.hp<=0){killEnemy(e);continue;}}}
+  if(e.stun>0){e.stun-=dt;continue;}
   if(e.dead){e.dying+=dt;const s=Math.max(0.01,1-e.dying*2.2);
    e.u.sp.scale.set(e.u.w*s,e.u.h*s,1);e.u.mat.opacity=s;
    if(e.dying>0.5){scene.remove(e.u.g);G.enemies.splice(i,1);}
    continue;}
-  const dx=heroU.g.position.x-e.u.g.position.x,dz=heroU.g.position.z-e.u.g.position.z;
+  let dx=heroU.g.position.x-e.u.g.position.x,dz=heroU.g.position.z-e.u.g.position.z;
+  if(G.invisT>0){const wa=e.ph+t*0.7;dx=Math.cos(wa)*10;dz=Math.sin(wa)*10;}
   const d=Math.hypot(dx,dz);
   e.cd-=dt;if(e.atkT>0)e.atkT-=dt;
   e.moving=false;
@@ -647,15 +755,17 @@ function frame(){
   if(d<H.pickup){gm.m.position.x+=(heroU.g.position.x-gm.m.position.x)*Math.min(1,dt*8);
    gm.m.position.z+=(heroU.g.position.z-gm.m.position.z)*Math.min(1,dt*8);}
   if(d<0.85){scene.remove(gm.m);G.gems.splice(i,1);G.xp+=gm.xp;
-   if(G.xp>=G.xpNext){G.xp-=G.xpNext;G.level++;G.xpNext=Math.round(8+G.level*4.5);levelUp();}}}
- camTgt.lerp(V3(heroU.g.position.x,0,heroU.g.position.z-0.5),Math.min(1,dt*4));
+   while(G.xp>=G.xpNext){G.xp-=G.xpNext;G.level++;G.xpNext=xpForLevel(G.level);G.pendingLevels++;}
+   if(G.pendingLevels>0&&!G.draftOpen)openDraft();}}
+ _ct.set(heroU.g.position.x,0,heroU.g.position.z-0.5);
+ if(_ct.distanceTo(camTgt)>1.5)camTgt.lerp(_ct,Math.min(1,dt*4));
  camPlace();
  sun.position.set(camTgt.x-8,16,camTgt.z+6);sun.target.position.copy(camTgt);sun.target.updateMatrixWorld();
  uiT-=dt;if(uiT<=0){uiT=0.12;updateUI();}
  for(let i=dmgNums.length-1;i>=0;i--){const n=dmgNums[i];n.t+=dt;
   const s=proj(n.x,n.y+n.t*1.6,n.z);
   n.d.style.transform='translate('+s.x+'px,'+s.y+'px) translate(-50%,-100%)';n.d.style.opacity=1-n.t/0.8;
-  if(n.t>0.8){n.d.remove();dmgNums.splice(i,1);}}
+  if(n.t>0.8){releaseDmg(n);dmgNums.splice(i,1);}}
  renderer.render(scene,camera);
 }
 function updateUI(){
@@ -690,6 +800,7 @@ function gameOver(){
  document.getElementById('stats').textContent='Survived '+Math.floor(G.t/60)+':'+String(Math.floor(G.t%60)).padStart(2,'0')+' · Level '+G.level+' · '+G.kills+' kills';
  document.getElementById('over').style.display='flex';
 }
+window.VS3D={G:G,openDraft:openDraft,applyDraft:applyDraft,draftPool:draftPool};
 frame();
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
 </script>
