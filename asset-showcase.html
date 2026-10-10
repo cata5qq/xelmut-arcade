@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🎨 Asset Showcase — Vampire Slayers</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:#14101d;color:#efe9ff;font-family:-apple-system,system-ui,sans-serif;padding:16px;max-width:1100px;margin:0 auto}
+h1{font-size:22px;margin:8px 0 2px}
+.sub{color:#a99ec7;font-size:13px;margin-bottom:14px}
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}
+.fgroup{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.flabel{font-size:12px;color:#a99ec7;margin-right:2px}
+.chip{border:1px solid #4a3f6b;background:#221b33;color:#efe9ff;border-radius:999px;padding:8px 14px;font-size:14px;cursor:pointer}
+.chip.on{background:#7c5cff;border-color:#7c5cff;color:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-top:14px}
+.card{background:#1e1830;border:1px solid #352b52;border-radius:14px;overflow:hidden;cursor:pointer;position:relative}
+.card img{width:100%;height:170px;object-fit:cover;display:block;background:#0d0a14}
+.card .meta{padding:8px 10px;font-size:12px}
+.card .t{font-weight:700;font-size:13px}
+.card .s{color:#a99ec7;font-size:11px;margin-top:2px}
+.badge{position:absolute;top:8px;left:8px;background:rgba(10,6,20,.75);border-radius:999px;padding:4px 10px;font-size:13px}
+#light{position:fixed;inset:0;background:rgba(5,3,10,.92);display:none;align-items:center;justify-content:center;z-index:50;padding:18px}
+#light.show{display:flex}
+#light img{max-width:100%;max-height:78vh;border-radius:12px}
+#light .cap{text-align:center;margin-top:10px;font-size:14px;color:#cfc4ee}
+#light .x{position:absolute;top:14px;right:18px;font-size:28px;color:#fff;cursor:pointer;padding:8px}
+.count{font-size:12px;color:#a99ec7;margin:10px 0}
+a.home{color:#9d8cff;font-size:13px}
+</style>
+</head>
+<body>
+<h1>🎨 Asset Showcase</h1>
+<div class="sub">Every model's take on the same 4 assets — pick the styles you like for Vampire Slayers v1.1</div>
+<div class="filters">
+<div class="fgroup"><span class="flabel">Maker:</span>
+<button class="chip on" data-f="seat" data-v="all">All</button>
+<button class="chip" data-f="seat" data-v="chatgpt">💬 ChatGPT</button>
+<button class="chip" data-f="seat" data-v="gemini">♊ Gemini</button>
+<button class="chip" data-f="seat" data-v="grok">✖️ Grok</button>
+<button class="chip" data-f="seat" data-v="muse">✨ Muse</button>
+</div>
+</div>
+<div class="filters">
+<div class="fgroup"><span class="flabel">Type:</span>
+<button class="chip on" data-f="type" data-v="all">All</button>
+<button class="chip" data-f="type" data-v="character">🧍 Character</button>
+<button class="chip" data-f="type" data-v="boss">👑 Boss</button>
+<button class="chip" data-f="type" data-v="map">🗺️ Map</button>
+<button class="chip" data-f="type" data-v="object">📦 Object</button>
+</div>
+</div>
+<div class="count" id="count"></div>
+<div class="grid" id="grid"></div>
+<div id="light"><span class="x" id="lx">✕</span><div><img id="limg" alt=""><div class="cap" id="lcap"></div></div></div>
+<p><a class="home" href="index.html">← Back to arcade</a></p>
+<script>
+const SEATS={chatgpt:'💬 ChatGPT',gemini:'♊ Gemini',grok:'✖️ Grok',muse:'✨ Muse'};
+const A=[
+['chatgpt','character','assets/showcase/chatgpt-character.png','Slayer Hero'],
+['chatgpt','boss','assets/showcase/chatgpt-boss.png','Gloop Regent'],
+['chatgpt','map','assets/showcase/chatgpt-map.png','Graveyard Arena'],
+['chatgpt','object','assets/showcase/chatgpt-object.png','Treasure Chest'],
+['gemini','character','assets/showcase/gemini-character.jpeg','Slayer Hero'],
+['gemini','boss','assets/showcase/gemini-boss.jpeg','Gloop Regent'],
+['gemini','map','assets/showcase/gemini-map.jpeg','Graveyard Arena'],
+['gemini','object','assets/showcase/gemini-object.jpeg','Treasure Chest'],
+['grok','character','assets/showcase/grok-character.jpg','Slayer Hero'],
+['grok','boss','assets/showcase/grok-boss.jpg','Gloop Regent'],
+['grok','map','assets/showcase/grok-map.jpg','Graveyard Arena'],
+['grok','object','assets/showcase/grok-object.jpg','Treasure Chest'],
+['muse','character','assets/showcase/muse-character.webp','Slayer Hero'],
+['muse','boss','assets/showcase/muse-boss.webp','Gloop Regent'],
+['muse','map','assets/showcase/muse-map.webp','Graveyard Arena'],
+['muse','object','assets/showcase/muse-object.webp','Treasure Chest'],
+];
+const f={seat:'all',type:'all'};
+function render(){
+ const g=document.getElementById('grid');g.innerHTML='';
+ let n=0;
+ A.forEach(a=>{
+  if((f.seat==='all'||a[0]===f.seat)&&(f.type==='all'||a[1]===f.type)){
+   n++;
+   const d=document.createElement('div');d.className='card';
+   d.innerHTML='<span class="badge">'+SEATS[a[0]]+'</span><img loading="lazy" src="'+a[2]+'" alt="'+a[3]+'"><div class="meta"><div class="t">'+a[3]+'</div><div class="s">'+a[1]+' · cartoon-realistic</div></div>';
+   d.onclick=()=>{document.getElementById('limg').src=a[2];document.getElementById('lcap').textContent=SEATS[a[0]]+' · '+a[3]+' ('+a[1]+')';document.getElementById('light').classList.add('show');};
+   g.appendChild(d);
+  }
+ });
+ document.getElementById('count').textContent=n+' assets shown';
+}
+document.querySelectorAll('.chip').forEach(c=>{
+ c.onclick=()=>{
+  document.querySelectorAll('.chip[data-f="'+c.dataset.f+'"]').forEach(x=>x.classList.remove('on'));
+  c.classList.add('on');f[c.dataset.f]=c.dataset.v;render();
+ };
+});
+document.getElementById('lx').onclick=()=>document.getElementById('light').classList.remove('show');
+document.getElementById('light').onclick=e=>{if(e.target.id==='light')e.currentTarget.classList.remove('show');};
+render();
+</script>
+</body>
+</html>
