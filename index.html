@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0b0620">
+<title>Xelmut's Arcade</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:#0b0620;color:#fff;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
+body{display:flex;flex-direction:column;align-items:center;padding:calc(env(safe-area-inset-top,0px) + 28px) 20px calc(env(safe-area-inset-bottom,0px) + 28px);overflow-y:auto}
+h1{font-size:34px;font-weight:900;letter-spacing:2px;background:linear-gradient(180deg,#22d3ee,#f0f);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px;text-align:center}
+.sub{color:#a78bfa;font-size:13px;letter-spacing:3px;margin-bottom:22px}
+.games{width:min(420px,94vw);display:flex;flex-direction:column;gap:12px}
+a.game{display:flex;align-items:center;gap:14px;padding:16px;border-radius:16px;text-decoration:none;color:#fff;
+background:rgba(20,10,45,.8);border:2px solid #22d3ee;box-shadow:0 0 14px rgba(34,211,238,.25);touch-action:manipulation}
+a.game:active{transform:scale(.97)}
+a.game .e{font-size:34px}
+a.game .t{font-weight:900;font-size:17px;letter-spacing:1px}
+a.game .d{font-size:12.5px;color:#a8a8c0;margin-top:2px}
+a.game.pink{border-color:#ff2d95;box-shadow:0 0 14px rgba(255,45,149,.25)}
+a.game.gold{border-color:#fbbf24;box-shadow:0 0 14px rgba(251,191,36,.25)}
+a.game.green{border-color:#4ade80;box-shadow:0 0 14px rgba(74,222,128,.25)}
+a.game.purple{border-color:#a78bfa;box-shadow:0 0 14px rgba(167,139,250,.25)}
+a.game.red{border-color:#f87171;box-shadow:0 0 14px rgba(248,113,113,.25)}
+.note{margin-top:22px;font-size:12px;color:#8b8ba3;text-align:center;line-height:1.7;max-width:340px}
+</style>
+</head>
+<body>
+<h1>🎮 XELMUT'S ARCADE</h1>
+<div class="sub">TAP A GAME TO PLAY</div>
+<div class="games">
+<a class="game" href="ship-race-cartoon.html"><span class="e">🎨</span><span><span class="t">Ship Battle — Cartoon HD</span><div class="d">Art race entry 3/3 · WoW-style cartoon ships</div></span></a>
+<a class="game pink" href="ship-race-admiralty.html"><span class="e">🗺️</span><span><span class="t">Ship Battle — Admiralty Chart</span><div class="d">Art race entry 2/3 · engraved sea chart</div></span></a>
+<a class="game gold" href="ship-race-inked.html"><span class="e">⚓</span><span><span class="t">Ship Battle — Inked Chart</span><div class="d">Art race entry 1/3 · teal sea-atlas woodcut</div></span></a>
+<a class="game red" href="vampire-horde.html"><span class="e">🧛</span><span><span class="t">Vampire Horde</span><div class="d">Survive the night · auto-weapons · evolving builds</div></span></a>
+<a class="game green" href="neon-drift.html"><span class="e">🏎️</span><span><span class="t">Neon Drift</span><div class="d">One-thumb drift arcade · bank combos with nitro</div></span></a>
+<a class="game purple" href="can-sequence.html"><span class="e">🐯</span><span><span class="t">Can Sequence</span><div class="d">Mind-training #2 · Simon-style memory</div></span></a>
+</div>
+<div class="note">Tip: open this page in Safari → Share → Add to Home Screen<br>for a fullscreen app icon with no browser chrome.</div>
+</body>
+</html>

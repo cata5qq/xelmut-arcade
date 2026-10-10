@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#05010d">
+<title>NEON DRIFT</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+button{touch-action:manipulation}
+html,body{height:100%;overflow:hidden;background:#05010d;position:fixed;width:100%;
+  font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;color:#fff;
+  overscroll-behavior:none;touch-action:none;-webkit-user-select:none;user-select:none}
+#game{position:absolute;inset:0;display:block;touch-action:none}
+#game.dim{filter:brightness(.45) saturate(.8)}
+.hidden{display:none!important}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:calc(env(safe-area-inset-top,0px) + 18px) 20px calc(env(safe-area-inset-bottom,0px) + 24px);
+  z-index:10;overflow-y:auto}
+/* synthwave menu backdrop */
+#scr-menu{background:radial-gradient(ellipse 90% 42% at 50% 30%,#2b0f54 0%,#12041f 55%,#05010d 100%)}
+.sun{width:190px;height:190px;border-radius:50%;margin-bottom:6px;
+  background:linear-gradient(180deg,#ffe95a 0%,#ffb02e 30%,#ff2d95 72%,#b026ff 100%);
+  box-shadow:0 0 60px 12px rgba(255,45,149,.45),0 0 140px 30px rgba(176,38,255,.25);
+  -webkit-mask-image:repeating-linear-gradient(180deg,#000 0 14px,transparent 14px 18px);
+  mask-image:repeating-linear-gradient(180deg,#000 0 14px,transparent 14px 18px)}
+.gridfloor{position:absolute;left:-20%;right:-20%;bottom:-4%;height:38%;pointer-events:none;
+  background:
+   repeating-linear-gradient(180deg,rgba(255,45,149,.28) 0 2px,transparent 2px 34px),
+   repeating-linear-gradient(90deg,rgba(34,211,238,.20) 0 2px,transparent 2px 44px);
+  transform:perspective(340px) rotateX(58deg);transform-origin:bottom;
+  -webkit-mask-image:linear-gradient(180deg,transparent,#000 45%);mask-image:linear-gradient(180deg,transparent,#000 45%)}
+h1.title{font-size:52px;font-weight:900;font-style:italic;letter-spacing:2px;line-height:.95;text-align:center;
+  background:linear-gradient(180deg,#22d3ee 20%,#f0f 75%,#ff2d95 100%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 18px rgba(240,0,255,.55));margin:2px 0 4px;z-index:1}
+.subtitle{color:#a78bfa;font-weight:700;letter-spacing:6px;font-size:13px;margin-bottom:14px;z-index:1}
+.hint{color:#8b8ba3;font-size:12.5px;text-align:center;line-height:1.6;margin:10px 0 4px;z-index:1;max-width:300px}
+.btn{display:block;width:min(320px,86vw);margin:7px 0;padding:16px 10px;font-size:19px;font-weight:900;
+  letter-spacing:2px;color:#fff;background:rgba(20,8,40,.72);border:2px solid #22d3ee;border-radius:14px;
+  cursor:pointer;text-align:center;box-shadow:0 0 16px rgba(34,211,238,.35),inset 0 0 18px rgba(34,211,238,.12);z-index:1}
+.btn:active{transform:scale(.96)}
+.btn.pink{border-color:#ff2d95;box-shadow:0 0 16px rgba(255,45,149,.4),inset 0 0 18px rgba(255,45,149,.14)}
+.btn.green{border-color:#4ade80;box-shadow:0 0 16px rgba(74,222,128,.4),inset 0 0 18px rgba(74,222,128,.14)}
+.btn.giant{padding:24px 10px;font-size:26px;margin-top:14px}
+.btn.small{width:auto;min-width:96px;padding:10px 14px;font-size:15px;margin:0}
+.btn.buy{border-color:#fbbf24;box-shadow:0 0 14px rgba(251,191,36,.4)}
+.statline{display:flex;gap:16px;margin:8px 0 10px;z-index:1;font-size:14px;font-weight:700;color:#e9d5ff}
+.statline b{color:#fbbf24}
+#hud-pause{position:absolute;top:calc(env(safe-area-inset-top,0px) + 8px);right:10px;z-index:20;
+  width:46px;height:46px;border-radius:12px;border:2px solid rgba(255,255,255,.35);
+  background:rgba(10,5,25,.6);color:#fff;font-size:17px;font-weight:900}
+#hud-mute,#b-mute{position:absolute;top:calc(env(safe-area-inset-top,0px) + 8px);left:10px;z-index:21;
+  width:46px;height:46px;border-radius:12px;border:2px solid rgba(255,255,255,.35);
+  background:rgba(10,5,25,.6);color:#fff;font-size:19px}
+/* game over */
+#scr-over{background:rgba(5,1,13,.82);backdrop-filter:blur(3px)}
+#o-title{font-size:46px;font-weight:900;font-style:italic;color:#ff4444;
+  text-shadow:0 0 24px rgba(255,40,40,.7);margin-bottom:2px}
+#o-score{font-size:64px;font-weight:900;color:#fff;text-shadow:0 0 22px rgba(34,211,238,.8);margin:2px 0 8px}
+.orow{display:flex;justify-content:space-between;width:min(320px,86vw);padding:7px 4px;
+  font-size:15px;font-weight:700;color:#c4b5fd;border-bottom:1px solid rgba(139,92,246,.25)}
+.orow b{color:#fff}
+#o-best{color:#fbbf24;font-weight:900;font-size:18px;margin:8px 0 0;letter-spacing:2px;
+  text-shadow:0 0 14px rgba(251,191,36,.8)}
+/* garage */
+#scr-garage{background:#070313;justify-content:flex-start;padding-top:calc(env(safe-area-inset-top,0px) + 14px)}
+#scr-garage h2{font-size:30px;font-weight:900;letter-spacing:3px;color:#22d3ee;
+  text-shadow:0 0 16px rgba(34,211,238,.7);margin-bottom:2px}
+.g-coins{color:#fbbf24;font-weight:900;font-size:18px;margin-bottom:10px}
+#g-cars{width:min(380px,94vw)}
+.car-card{--cc:#22d3ee;border:2px solid var(--cc);border-radius:14px;padding:12px;margin:10px 0;
+  background:rgba(15,6,32,.85);box-shadow:0 0 14px color-mix(in srgb,var(--cc) 40%,transparent)}
+.car-card.sel{box-shadow:0 0 22px var(--cc)}
+.car-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.car-name{font-size:20px;font-weight:900;letter-spacing:2px;color:var(--cc)}
+.car-desc{font-size:12.5px;color:#a8a8c0;margin-bottom:8px}
+.pill{font-size:12px;font-weight:800;padding:8px 12px;border-radius:20px;border:1px solid #4ade80;color:#4ade80}
+.pill.on{background:rgba(74,222,128,.15)}
+.stats{margin-top:2px}
+.srow{display:flex;align-items:center;gap:8px;margin:3px 0;font-size:11px;font-weight:800;color:#8b8ba3}
+.srow span{width:30px}
+.stat{flex:1;height:7px;border-radius:4px;background:rgba(255,255,255,.1);overflow:hidden}
+.statfill{height:100%;background:linear-gradient(90deg,#22d3ee,#f0f);border-radius:4px}
+.upg-sec{width:min(380px,94vw);margin-top:6px}
+.upg-sec h3{font-size:16px;letter-spacing:2px;color:#a78bfa;margin:8px 0 4px}
+.upg-row{display:flex;justify-content:space-between;align-items:center;padding:10px;
+  border:1px solid rgba(139,92,246,.4);border-radius:12px;margin:8px 0;background:rgba(15,6,32,.85)}
+.upg-name{font-weight:900;font-size:14px;letter-spacing:1px}
+.upg-desc{font-size:11.5px;color:#a8a8c0;margin:2px 0 6px}
+.pips{display:flex;gap:5px}
+.pip{width:22px;height:9px;border-radius:5px;background:rgba(255,255,255,.12)}
+.pip.on{background:linear-gradient(90deg,#22d3ee,#f0f);box-shadow:0 0 8px rgba(240,0,255,.6)}
+#scr-pause{background:rgba(5,1,13,.78)}
+#scr-pause h2{font-size:38px;font-weight:900;letter-spacing:4px;margin-bottom:14px;
+  color:#22d3ee;text-shadow:0 0 18px rgba(34,211,238,.7)}
+.backrow{margin-top:10px}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<button id="hud-pause" class="hidden" aria-label="pause">| |</button>
+
+<div id="scr-menu" class="screen">
+  <div class="gridfloor"></div>
+  <div class="sun"></div>
+  <h1 class="title">NEON<br>DRIFT</h1>
+  <div class="subtitle">ONE-THUMB ARCADE</div>
+  <div class="statline"><span>🪙 <b id="m-coins">0</b></span><span>BEST <b id="m-best">0</b></span><span>TRIAL <b id="m-best-trial">0</b></span></div>
+  <button class="btn" id="b-endless">ENDLESS DRIVE</button>
+  <button class="btn pink" id="b-trial">TIME TRIAL</button>
+  <button class="btn green" id="b-daily">DAILY · <span id="m-daily">PLAY TODAY</span></button>
+  <button class="btn" id="b-garage">GARAGE · <span id="m-car">VOLT</span></button>
+  <div class="hint">DRAG anywhere to steer &amp; drift — release to bank combo + fire nitro.<br>Near misses &amp; gates charge your run. Don't kiss the traffic.</div>
+  <button id="b-mute" aria-label="mute">🔊</button>
+</div>
+
+<div id="scr-garage" class="screen hidden">
+  <h2>GARAGE</h2>
+  <div class="g-coins">🪙 <span id="g-coins">0</span></div>
+  <div id="g-cars"></div>
+  <div class="upg-sec"><h3>UPGRADES</h3><div id="g-upg"></div></div>
+  <div class="backrow"><button class="btn small" id="b-back">← BACK</button></div>
+</div>
+
+<div id="scr-over" class="screen hidden">
+  <div id="o-title">WRECKED!</div>
+  <div id="o-score">0</div>
+  <div id="o-best"></div>
+  <div class="orow"><span>BANKED</span><b id="o-banked">0</b></div>
+  <div class="orow"><span>NEAR MISSES</span><b id="o-near">0</b></div>
+  <div class="orow"><span>GATES</span><b id="o-gates">0</b></div>
+  <div class="orow"><span>COINS EARNED</span><b id="o-coins">+0 🪙</b></div>
+  <button class="btn pink giant" id="b-restart">↻ DRIVE AGAIN</button>
+  <button class="btn small" id="b-menu2">MENU</button>
+</div>
+
+<div id="scr-pause" class="screen hidden">
+  <h2>PAUSED</h2>
+  <button class="btn" id="b-resume">RESUME</button>
+  <button class="btn small" id="b-quit">QUIT TO MENU</button>
+</div>
+
+<script>
+/* NEON DRIFT — one-thumb synthwave arcade car game.
+ * Single-file browser game. Core engine + renderer.
+ * In browser: boot() wires DOM + canvas. In node: module.exports for headless tests.
+ */
+(function () {
+'use strict';
+
+/* ---------------- utils ---------------- */
+function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+function lerp(a, b, t) { return a + (b - a) * t; }
+function mulberry32(seed) {
+  var s = seed >>> 0;
+  return function () {
+    s |= 0; s = (s + 0x6D2B79F5) | 0;
+    var t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function hashStr(str) {
+  var h = 2166136261;
+  for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+var TAU = Math.PI * 2;
+
+/* iOS-hardened tap binding: pointerup fires reliably on iPhone touch where
+ * click synthesis can fail (desktop-tested click handlers going dead on iOS
+ * is a known Safari failure mode). click is kept as fallback. The 600ms guard
+ * dedupes the pointerup+click pair; the 10px slop ignores scroll-drags so a
+ * scroll ending on a button can't trigger it. */
+function onTap(el, fn) {
+  if (!el || typeof el.addEventListener !== 'function') return;
+  var lastFire = 0, dx0 = 0, dy0 = 0;
+  function fire(e) {
+    var now = Date.now();
+    if (now - lastFire < 600) return;
+    lastFire = now;
+    fn(e);
+  }
+  el.addEventListener('pointerdown', function (e) { dx0 = e.clientX || 0; dy0 = e.clientY || 0; });
+  el.addEventListener('pointerup', function (e) {
+    var dx = (e.clientX || 0) - dx0, dy = (e.clientY || 0) - dy0;
+    if (dx * dx + dy * dy > 100) return;
+    fire(e);
+  });
+  el.addEventListener('click', fire);
+}
+
+/* ---------------- save ---------------- */
+var SAVE_KEY = 'neonDriftSaveV1';
+function defaultSave() {
+  return {
+    coins: 250,
+    selectedCar: 'volt',
+    cars: { volt: { unlocked: true } },
+    upgrades: { speed: 0, drift: 0, nitro: 0 },
+    best: { endless: 0, trial: 0 },
+    daily: { date: '', best: 0, played: false },
+    muted: false,
+    runs: 0
+  };
+}
+function loadSave(storage) {
+  try {
+    var raw = storage.getItem(SAVE_KEY);
+    if (!raw) return defaultSave();
+    var s = JSON.parse(raw), d = defaultSave();
+    for (var k in d) if (s[k] !== undefined) d[k] = s[k];
+    return d;
+  } catch (e) { return defaultSave(); }
+}
+function storeSave(storage, save) {
+  try { storage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {}
+}
+
+/* ---------------- audio (tiny synth, guarded) ---------------- */
+var Sfx = {
+  ctx: null, engineOsc: null, engineGain: null, enabled: true,
+  init: function () {
+    if (this.ctx || typeof window === 'undefined') return;
+    try {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      this.ctx = new AC();
+    } catch (e) { this.ctx = null; }
+  },
+  resume: function () {
+    if (this.ctx && this.ctx.state === 'suspended') {
+      try { this.ctx.resume(); } catch (e) {}
+    }
+  },
+  setMuted: function (m) { this.enabled = !m; },
+  engine: function (on, speedNorm) {
+    if (!this.ctx || !this.enabled) return;
+    try {
+      if (on && !this.engineOsc) {
+        this.engineOsc = this.ctx.createOscillator();
+        this.engineGain = this.ctx.createGain();
+        this.engineOsc.type = 'sawtooth';
+        this.engineOsc.frequency.value = 60;
+        this.engineGain.gain.value = 0.03;
+        this.engineOsc.connect(this.engineGain);
+        this.engineGain.connect(this.ctx.destination);
+        this.engineOsc.start();
+      }
+      if (this.engineOsc) {
+        var f = 55 + speedNorm * 130;
+        this.engineOsc.frequency.setTargetAtTime(f, this.ctx.currentTime, 0.1);
+        this.engineGain.gain.setTargetAtTime(on ? 0.028 + speedNorm * 0.03 : 0.0, this.ctx.currentTime, 0.15);
+        if (!on) { var o = this.engineOsc, g = this.engineGain; this.engineOsc = null; this.engineGain = null;
+          setTimeout(function () { try { o.stop(); o.disconnect(); g.disconnect(); } catch (e) {} }, 400); }
+      }
+    } catch (e) {}
+  },
+  blip: function (freq, dur, type, vol) {
+    if (!this.ctx || !this.enabled) return;
+    try {
+      var t = this.ctx.currentTime, o = this.ctx.createOscillator(), g = this.ctx.createGain();
+      o.type = type || 'square'; o.frequency.value = freq || 880;
+      g.gain.setValueAtTime(vol || 0.06, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + (dur || 0.08));
+      o.connect(g); g.connect(this.ctx.destination);
+      o.start(t); o.stop(t + (dur || 0.08) + 0.02);
+    } catch (e) {}
+  },
+  chime: function () { this.blip(660, 0.09, 'sine', 0.08); var s = this; setTimeout(function(){ s.blip(990, 0.12, 'sine', 0.08); }, 70); },
+  nearMiss: function (combo) { this.blip(500 + Math.min(combo, 20) * 45, 0.07, 'square', 0.05); },
+  crash: function () {
+    if (!this.ctx || !this.enabled) return;
+    try {
+      var t = this.ctx.currentTime, len = 0.5, sr = this.ctx.sampleRate;
+      var buf = this.ctx.createBuffer(1, sr * len, sr), d = buf.getChannelData(0);
+      for (var i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 2);
+      var src = this.ctx.createBufferSource(); src.buffer = buf;
+      var g = this.ctx.createGain(); g.gain.value = 0.25;
+      var f = this.ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 900;
+      src.connect(f); f.connect(g); g.connect(this.ctx.destination); src.start(t);
+      this.blip(70, 0.4, 'sawtooth', 0.2);
+    } catch (e) {}
+  },
+  whoosh: function () {
+    if (!this.ctx || !this.enabled) return;
+    try {
+      var t = this.ctx.currentTime, o = this.ctx.createOscillator(), g = this.ctx.createGain();
+      o.type = 'sawtooth';
+      o.frequency.setValueAtTime(180, t);
+      o.frequency.exponentialRampToValueAtTime(900, t + 0.5);
+      g.gain.setValueAtTime(0.10, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
+      o.connect(g); g.connect(this.ctx.destination); o.start(t); o.stop(t + 0.65);
+    } catch (e) {}
+  }
+};
+
+/* ---------------- data ---------------- */
+var CARS = [
+  { id: 'volt',  name: 'VOLT',  price: 0,    color: '#22d3ee', glow: '#0ea5e9', top: 1.00, grip: 1.00, drift: 1.00, nitro: 100, desc: 'Balanced starter. Does everything fine.' },
+  { id: 'viper', name: 'VIPER', price: 800,  color: '#f0f',    glow: '#d946ef', top: 1.18, grip: 0.82, drift: 1.25, nitro: 90,  desc: 'Wild top speed, loose tail. For risk takers.' },
+  { id: 'rhino', name: 'RHINO', price: 1600, color: '#fb923c', glow: '#f97316', top: 0.92, grip: 1.32, drift: 0.75, nitro: 130, desc: 'Grips like a tank. Huge nitro tank.' },
+  { id: 'wraith',name: 'WRAITH',price: 3200, color: '#a78bfa', glow: '#8b5cf6', top: 1.08, grip: 0.95, drift: 1.60, nitro: 115, desc: 'Drift royalty. Charges nitro absurdly fast.' }
+];
+function carById(id) {
+  for (var i = 0; i < CARS.length; i++) if (CARS[i].id === id) return CARS[i];
+  return CARS[0];
+}
+var UPG = {
+  speed: { name: 'TOP SPEED',    max: 5, desc: '+5% top speed / lvl' },
+  drift: { name: 'DRIFT CONTROL', max: 5, desc: '+12% nitro charge, calmer tail / lvl' },
+  nitro: { name: 'NITRO TANK',   max: 5, desc: '+18% nitro capacity / lvl' }
+};
+function upgradeCost(track, level) { return Math.round(120 * Math.pow(1.7, level)); }
+
+/* gameplay tuning */
+var TUNE = {
+  baseSpeed: 430, maxSpeed: 1150, speedRamp: 7.5,
+  lanes: 4,
+  nearMissWindow: 52,
+  hitboxShrink: 0.78,
+  driftCharge: 34,
+  boostTime: 2.2, boostMult: 1.45,
+  nitroFireMin: 20,
+  gateEvery: 9,
+  bankPerCombo: 40
+};
+
+/* ---------------- sprites (2x pre-rendered, browser only) ---------------- */
+var HAS_DOM = function () { return (typeof document !== 'undefined'); };
+function makeCanvas(w, h) {
+  var c = document.createElement('canvas');
+  c.width = Math.ceil(w * 2); c.height = Math.ceil(h * 2);
+  var x = c.getContext('2d'); x.scale(2, 2);
+  return { canvas: c, ctx: x, w: w, h: h };
+}
+function drawCarBody(x, w, h, color, glow, isPlayer) {
+  var r = w * 0.28;
+  // underglow
+  var g = x.createRadialGradient(w/2, h/2, 4, w/2, h/2, w * 0.95);
+  g.addColorStop(0, glow); g.addColorStop(1, 'rgba(0,0,0,0)');
+  x.globalAlpha = 0.55; x.fillStyle = g;
+  x.fillRect(-w*0.3, -h*0.15, w*1.6, h*1.3);
+  x.globalAlpha = 1;
+  // body
+  x.fillStyle = '#0b0b16';
+  x.strokeStyle = color; x.lineWidth = isPlayer ? 2.5 : 2;
+  x.beginPath();
+  x.moveTo(w*0.5, 2);
+  x.lineTo(w - r, 2); x.quadraticCurveTo(w - 2, 2, w - 2, r);
+  x.lineTo(w - 2, h - r); x.quadraticCurveTo(w - 2, h - 2, w - r, h - 2);
+  x.lineTo(r, h - 2); x.quadraticCurveTo(2, h - 2, 2, h - r);
+  x.lineTo(2, r); x.quadraticCurveTo(2, 2, r, 2);
+  x.closePath(); x.fill(); x.stroke();
+  // nose stripe
+  x.fillStyle = color; x.globalAlpha = 0.9;
+  x.fillRect(w*0.5 - 2, 4, 4, h*0.22);
+  x.globalAlpha = 1;
+  // windshield + roof
+  x.fillStyle = 'rgba(140,180,255,0.28)';
+  x.fillRect(w*0.2, h*0.30, w*0.6, h*0.16);
+  x.fillStyle = '#05050c';
+  x.fillRect(w*0.22, h*0.50, w*0.56, h*0.20);
+  x.strokeStyle = color; x.lineWidth = 1;
+  x.strokeRect(w*0.22, h*0.50, w*0.56, h*0.20);
+  // wheels
+  x.fillStyle = '#000';
+  var ww = w*0.16, wh = h*0.16;
+  x.fillRect(-1, h*0.18, ww, wh); x.fillRect(w - ww + 1, h*0.18, ww, wh);
+  x.fillRect(-1, h*0.66, ww, wh); x.fillRect(w - ww + 1, h*0.66, ww, wh);
+}
+function playerSprite(car) {
+  var S = makeCanvas(52, 92), x = S.ctx;
+  drawCarBody(x, 52, 92, car.color, car.glow, true);
+  // headlight beam (pre-rendered gradient, drawn additively at render time)
+  var beam = makeCanvas(120, 200), b = beam.ctx;
+  var bg = b.createLinearGradient(0, 0, 0, 200);
+  bg.addColorStop(0, 'rgba(255,255,230,0.30)'); bg.addColorStop(1, 'rgba(255,255,230,0)');
+  b.fillStyle = bg;
+  b.beginPath(); b.moveTo(48, 0); b.lineTo(72, 0); b.lineTo(120, 200); b.lineTo(0, 200); b.closePath(); b.fill();
+  // headlights
+  x.fillStyle = '#fffbe8';
+  x.beginPath(); x.arc(12, 8, 4, 0, TAU); x.arc(40, 8, 4, 0, TAU); x.fill();
+  // taillight bar
+  x.fillStyle = car.color; x.fillRect(8, 84, 36, 4);
+  return { car: S.canvas, beam: beam.canvas };
+}
+function trafficSprite(color, wide) {
+  var w = wide ? 76 : 50, h = wide ? 110 : 88;
+  var S = makeCanvas(w, h), x = S.ctx;
+  drawCarBody(x, w, h, color, color, false);
+  // taillights (we see their rear — they drive the same direction, slower)
+  x.fillStyle = '#ff2a2a';
+  x.fillRect(6, h - 8, w*0.28, 4); x.fillRect(w - 6 - w*0.28, h - 8, w*0.28, 4);
+  return S.canvas;
+}
+var TRAFFIC_COLORS = ['#ff2d78', '#ffb020', '#ff4444', '#c084fc', '#f472b6'];
+
+/* ---------------- Game ---------------- */
+function Game(storage, opts) {
+  this.storage = storage || (typeof localStorage !== 'undefined' ? localStorage : null);
+  this.save = loadSave(this.storage || { getItem: function(){ return null; }, setItem: function(){} });
+  this.W = 390; this.H = 760;
+  this.phase = 'idle';           // idle | run | crash | over
+  this.mode = 'endless';         // endless | trial | daily
+  this.rng = Math.random;
+  this.sprites = null;
+  this.reset();
+}
+Game.prototype.reset = function () {
+  this.t = 0; this.timeScale = 1;
+  this.score = 0; this.banked = 0; this.combo = 0; this.nearMisses = 0; this.gatesHit = 0;
+  this.nitro = 0; this.boostT = 0;
+  this.speed = TUNE.baseSpeed; this.speedNorm = 0;
+  this.playerX = 0; this.vx = 0; this.steer = 0;
+  this.drifting = false; this.driftIntensity = 0; this.flick = 0;
+  this.traffic = []; this.gates = []; this.particles = []; this.trails = [];
+  this.spawnT = 0; this.gateT = TUNE.gateEvery * 0.6;
+  this.crashT = 0; this.shake = 0; this.flash = 0; this.flashText = '';
+  this.touching = false; this.touchStartX = 0; this.touchX = 0; this.prevSteer = 0;
+  this.trialT = 0; this.coinsEarned = 0; this.newBest = false;
+  this.roadScroll = 0; this.paused = false;
+  this.carDef = carById(this.save.selectedCar);
+  this.nitroCap = this.carDef.nitro * (1 + 0.18 * this.save.upgrades.nitro);
+  this.topMult = this.carDef.top * (1 + 0.05 * this.save.upgrades.speed);
+  this.driftMult = this.carDef.drift * (1 + 0.12 * this.save.upgrades.drift);
+};
+Game.prototype.resize = function (w, h) { this.W = w; this.H = h; };
+Game.prototype.roadW = function () { return Math.min(this.W * 0.94, 460); };
+Game.prototype.roadX = function () { return (this.W - this.roadW()) / 2; };
+Game.prototype.laneX = function (lane) {
+  return this.roadX() + this.roadW() * (lane + 0.5) / TUNE.lanes;
+};
+Game.prototype.playerY = function () { return this.H * 0.74; };
+
+Game.prototype.startRun = function (mode, seed) {
+  this.reset();
+  this.mode = mode || 'endless';
+  this.rng = (seed !== undefined) ? mulberry32(seed) : Math.random;
+  this.phase = 'run';
+  this.save.runs++;
+  storeSave(this.storage, this.save);
+  if (this.mode === 'trial') this.trialT = 60;
+  // 10-second hook: start MID-DRIFT — sliding, nitro half charged, traffic ahead, combo seeded
+  this.vx = -260; this.steer = -0.7; this.drifting = true; this.driftIntensity = 0.8;
+  this.nitro = this.nitroCap * 0.5; this.combo = 2;
+  for (var i = 0; i < 4; i++) this.spawnRow(true);
+  Sfx.engine(true, 0.4);
+};
+
+Game.prototype.spawnRow = function (initial) {
+  var lanes = [0, 1, 2, 3];
+  // shuffle, keep one lane free so there's always a gap
+  for (var i = lanes.length - 1; i > 0; i--) {
+    var j = Math.floor(this.rng() * (i + 1)), tmp = lanes[i]; lanes[i] = lanes[j]; lanes[j] = tmp;
+  }
+  var count = 1 + Math.floor(this.rng() * (this.t < 45 ? 2 : 3));
+  var y = initial ? (-80 - this.rng() * this.H * 0.55) : -120;
+  for (var k = 0; k < count; k++) {
+    var lane = lanes[k];
+    var kind = this.rng();
+    var wide = kind < 0.18, speeder = !wide && kind > 0.72;
+    this.traffic.push({
+      lane: lane, x: this.laneX(lane), y: y - k * 40,
+      w: wide ? 76 : 50, h: wide ? 110 : 88,
+      color: TRAFFIC_COLORS[Math.floor(this.rng() * TRAFFIC_COLORS.length)],
+      wide: wide, speeder: speeder,
+      v: (speeder ? 300 : 170) + this.rng() * 60,   // their own forward speed (slower than player)
+      wobble: this.rng() * TAU, wobAmp: speeder ? 0.6 : 0.15,
+      changeT: 4 + this.rng() * 6, targetLane: lane, blinker: 0,
+      passed: false, sprite: null
+    });
+  }
+};
+
+Game.prototype.spawnGate = function () {
+  var gapW = 120, minX = this.roadX() + gapW / 2 + 8, maxX = this.roadX() + this.roadW() - gapW / 2 - 8;
+  var cx = minX + this.rng() * (maxX - minX);
+  this.gates.push({ x: cx, y: -60, gap: gapW, hit: false });
+};
+
+/* input */
+Game.prototype.touchStart = function (x) {
+  this.touching = true; this.touchStartX = x; this.touchX = x;
+  this.steer = 0; this.prevSteer = 0;
+  Sfx.init(); Sfx.resume();
+};
+Game.prototype.touchMove = function (x) {
+  if (!this.touching) return;
+  this.touchX = x;
+  var ns = clamp((x - this.touchStartX) / 110, -1, 1);
+  // flick detection: fast steer change kicks the tail out
+  this.flick = Math.max(this.flick, clamp(Math.abs(ns - this.prevSteer) * 6 - 0.6, 0, 1.4));
+  this.prevSteer = this.steer; this.steer = ns;
+};
+Game.prototype.touchEnd = function () {
+  if (!this.touching) return;
+  this.touching = false;
+  if (this.phase !== 'run') { this.steer = 0; return; }
+  this.bankCombo(this.nitro >= TUNE.nitroFireMin);
+  this.steer = 0;
+};
+
+Game.prototype.bankCombo = function (withBoost) {
+  if (this.combo > 0) {
+    var val = Math.round(this.combo * TUNE.bankPerCombo * (this.mode === 'trial' ? 2 : 1));
+    this.score += val; this.banked += val;
+    this.flash = 1; this.flashText = 'BANKED +' + val;
+    Sfx.chime();
+  }
+  if (withBoost && this.nitro >= TUNE.nitroFireMin) {
+    this.boostT = TUNE.boostTime;
+    this.nitro = Math.max(0, this.nitro - this.nitroCap * 0.55);
+    this.shake = Math.max(this.shake, 7);
+    Sfx.whoosh();
+  }
+  this.combo = 0;
+};
+
+/* ---------------- update ---------------- */
+Game.prototype.update = function (rawDt) {
+  var dt = Math.min(rawDt, 0.05) * this.timeScale;
+  if (this.phase === 'crash') {
+    this.crashT -= rawDt;
+    this.updateParticles(dt);
+    this.shake = Math.max(0, this.shake - rawDt * 14);
+    if (this.crashT <= 0) this.finishRun();
+    return;
+  }
+  if (this.phase !== 'run') return;
+  this.t += dt;
+
+  var car = this.carDef, upg = this.save.upgrades;
+  // speed: ramp with time, boost multiplier
+  var targetMax = TUNE.maxSpeed * this.topMult;
+  this.speed = Math.min(targetMax, TUNE.baseSpeed * this.topMult + this.t * TUNE.speedRamp);
+  var spd = this.speed * (this.boostT > 0 ? TUNE.boostMult : 1);
+  if (this.boostT > 0) { this.boostT -= dt; this.nitro = Math.max(0, this.nitro - dt * 8); }
+  this.speedNorm = clamp((spd - TUNE.baseSpeed) / (TUNE.maxSpeed * 1.45 - TUNE.baseSpeed), 0, 1);
+  this.roadScroll = (this.roadScroll + spd * dt) % 48;
+  Sfx.engine(true, this.speedNorm);
+
+  // steering physics — forgiving arcade slip model
+  var maxLat = 560 * (0.75 + 0.25 * car.grip);
+  var targetVx = this.steer * maxLat;
+  var gripRate = 6.5 * (0.7 + 0.3 * car.grip);
+  this.vx += (targetVx - this.vx) * Math.min(1, gripRate * dt);
+  // flick kick: extra lateral impulse when the finger snaps
+  if (this.flick > 0.05 && this.touching) {
+    this.vx += Math.sign(this.steer || 1) * this.flick * 420 * dt * 8;
+    this.flick = Math.max(0, this.flick - dt * 3.2);
+  }
+  this.playerX = clamp(this.playerX + this.vx * dt, -this.roadW() / 2 + 34, this.roadW() / 2 - 34);
+  if (Math.abs(this.playerX) >= this.roadW() / 2 - 35) this.vx *= 0.4; // soft wall
+
+  // drift state: hard steering at speed, or flick
+  var steerMag = Math.abs(this.steer);
+  var wantDrift = this.touching && (steerMag > 0.55 || this.flick > 0.35) && spd > 250;
+  this.driftIntensity = lerp(this.driftIntensity, wantDrift ? clamp(steerMag * 1.15, 0, 1) : 0, Math.min(1, dt * (wantDrift ? 7 : 4)));
+  this.drifting = this.driftIntensity > 0.25;
+  if (this.drifting) {
+    this.nitro = Math.min(this.nitroCap, this.nitro + TUNE.driftCharge * this.driftMult * this.driftIntensity * dt);
+    this.score += dt * 26 * this.driftIntensity * (1 + this.combo * 0.1);
+    this.emitTrail(dt);
+    if (this.rng() < dt * 22 * this.driftIntensity) this.emitSmoke();
+  }
+
+  // distance score
+  this.score += spd * dt * 0.02 * (1 + this.combo * 0.12);
+
+  // trial countdown
+  if (this.mode === 'trial') {
+    this.trialT -= dt;
+    if (this.trialT <= 0) { this.trialT = 0; this.finishRun(); return; }
+  }
+
+  // spawning
+  var density = clamp(1.05 - this.t * 0.0075 - this.speedNorm * 0.28, 0.30, 1.05);
+  this.spawnT -= dt;
+  if (this.spawnT <= 0) { this.spawnRow(false); this.spawnT = density * (0.85 + this.rng() * 0.4); }
+  this.gateT -= dt;
+  if (this.gateT <= 0) { this.spawnGate(); this.gateT = TUNE.gateEvery * (0.9 + this.rng() * 0.3); }
+
+  this.updateTraffic(dt, spd);
+  this.updateGates(dt, spd);
+  this.updateParticles(dt);
+  this.updateTrails(dt);
+  this.shake = Math.max(0, this.shake - dt * 10);
+  this.flash = Math.max(0, this.flash - dt * 1.6);
+  this.checkCollisions();
+};
+
+Game.prototype.updateTraffic = function (dt, spd) {
+  var py = this.playerY();
+  for (var i = this.traffic.length - 1; i >= 0; i--) {
+    var c = this.traffic[i];
+    // lane changing (telegraphed with blinker)
+    c.changeT -= dt;
+    if (c.changeT <= 0 && c.speeder && c.y < py - 200) {
+      var nl = clamp(c.lane + (this.rng() < 0.5 ? -1 : 1), 0, TUNE.lanes - 1);
+      if (nl !== c.lane) { c.targetLane = nl; c.blinker = 1.2; }
+      c.changeT = 3 + this.rng() * 5;
+    }
+    if (c.blinker > 0) {
+      c.blinker -= dt;
+      c.lane = lerp(c.lane, c.targetLane, Math.min(1, dt * 1.6));
+      c.x = this.laneX(c.lane);
+      if (c.blinker <= 0) c.lane = c.targetLane;
+    }
+    c.wobble += dt * 2;
+    c.y += (spd - c.v * (this.boostT > 0 ? 0.85 : 1)) * dt;
+    c.x += Math.sin(c.wobble) * c.wobAmp * dt * 10;
+    // near-miss: crossed player y with a close-but-clean lateral gap
+    if (!c.passed && c.y > py) {
+      c.passed = true;
+      var dx = Math.abs(c.x - (this.W / 2 + this.playerX));
+      var minDx = (c.w + 52) / 2 * TUNE.hitboxShrink;
+      if (dx > minDx && dx < minDx + TUNE.nearMissWindow) {
+        this.combo++;
+        this.nearMisses++;
+        this.score += 10 * (1 + this.combo * 0.1);
+        this.nitro = Math.min(this.nitroCap, this.nitro + 6);
+        this.flash = 0.8; this.flashText = 'NEAR MISS x' + this.combo;
+        Sfx.nearMiss(this.combo);
+      }
+    }
+    if (c.y > this.H + 140) this.traffic.splice(i, 1);
+  }
+};
+
+Game.prototype.updateGates = function (dt, spd) {
+  var py = this.playerY(), px = this.W / 2 + this.playerX;
+  for (var i = this.gates.length - 1; i >= 0; i--) {
+    var g = this.gates[i];
+    g.y += spd * dt;
+    if (!g.hit && g.y >= py) {
+      g.hit = true;
+      if (Math.abs(px - g.x) < g.gap / 2) {
+        this.gatesHit++;
+        var val = Math.round(this.combo * TUNE.bankPerCombo * 0.6);
+        this.score += val; this.banked += val;
+        if (this.mode === 'trial') this.trialT = Math.min(this.trialT + 2, 75);
+        this.nitro = Math.min(this.nitroCap, this.nitro + 30);
+        this.flash = 1; this.flashText = 'GATE +' + val;
+        Sfx.chime();
+        this.combo = 0;
+      }
+    }
+    if (g.y > this.H + 80) this.gates.splice(i, 1);
+  }
+};
+
+Game.prototype.checkCollisions = function () {
+  var px = this.W / 2 + this.playerX, py = this.playerY();
+  var pw = 52 * TUNE.hitboxShrink, ph = 92 * TUNE.hitboxShrink;
+  for (var i = 0; i < this.traffic.length; i++) {
+    var c = this.traffic[i];
+    var cw = c.w * TUNE.hitboxShrink, ch = c.h * TUNE.hitboxShrink;
+    if (Math.abs(c.x - px) < (pw + cw) / 2 && Math.abs(c.y - py) < (ph + ch) / 2) {
+      this.startCrash(c);
+      return;
+    }
+  }
+};
+
+Game.prototype.startCrash = function (car) {
+  this.phase = 'crash'; this.crashT = 1.35; this.timeScale = 0.22;
+  this.shake = 16; this.combo = 0;
+  this.explode(this.W / 2 + this.playerX, this.playerY());
+  if (car) this.explode(car.x, car.y);
+  Sfx.crash(); Sfx.engine(false, 0);
+  this.touching = false;
+};
+
+Game.prototype.finishRun = function () {
+  this.phase = 'over'; this.timeScale = 1;
+  Sfx.engine(false, 0);
+  var finalScore = Math.round(this.score);
+  this.coinsEarned = Math.floor(finalScore / 40) + this.nearMisses;
+  if (this.mode === 'daily' && !this.save.daily.played) { this.coinsEarned += 50; }
+  this.save.coins += this.coinsEarned;
+  var key = this.mode === 'endless' ? 'endless' : (this.mode === 'trial' ? 'trial' : null);
+  if (key && finalScore > (this.save.best[key] || 0)) { this.save.best[key] = finalScore; this.newBest = true; }
+  if (this.mode === 'daily') {
+    var today = new Date().toISOString().slice(0, 10);
+    this.save.daily.date = today; this.save.daily.played = true;
+    if (finalScore > (this.save.daily.best || 0)) { this.save.daily.best = finalScore; this.newBest = true; }
+  }
+  storeSave(this.storage, this.save);
+};
+
+/* ---------------- economy ---------------- */
+Game.prototype.buyCar = function (id) {
+  var car = carById(id);
+  if (this.save.cars[id] && this.save.cars[id].unlocked) { this.save.selectedCar = id; storeSave(this.storage, this.save); return true; }
+  if (this.save.coins < car.price) return false;
+  this.save.coins -= car.price;
+  this.save.cars[id] = { unlocked: true };
+  this.save.selectedCar = id;
+  storeSave(this.storage, this.save);
+  return true;
+};
+Game.prototype.buyUpgrade = function (track) {
+  var lvl = this.save.upgrades[track] || 0;
+  if (lvl >= UPG[track].max) return false;
+  var cost = upgradeCost(track, lvl);
+  if (this.save.coins < cost) return false;
+  this.save.coins -= cost;
+  this.save.upgrades[track] = lvl + 1;
+  storeSave(this.storage, this.save);
+  return true;
+};
+
+/* ---------------- particles & trails ---------------- */
+Game.prototype.emitSmoke = function () {
+  if (this.particles.length > 220) return;
+  var px = this.W / 2 + this.playerX, py = this.playerY() + 34;
+  this.particles.push({
+    type: 'smoke', x: px + (this.rng() - 0.5) * 36, y: py,
+    vx: (this.rng() - 0.5) * 60 - this.vx * 0.2, vy: 60 + this.rng() * 60,
+    life: 0.7 + this.rng() * 0.4, age: 0, size: 8 + this.rng() * 10
+  });
+};
+Game.prototype.emitTrail = function (dt) {
+  if (this.trails.length > 130) this.trails.splice(0, 10);
+  var px = this.W / 2 + this.playerX, py = this.playerY() + 30;
+  var slip = clamp(this.driftIntensity, 0, 1);
+  this.trails.push({ x: px - 16, y: py, life: 0.9, age: 0, w: 5 + slip * 4 });
+  this.trails.push({ x: px + 16, y: py, life: 0.9, age: 0, w: 5 + slip * 4 });
+};
+Game.prototype.explode = function (x, y) {
+  for (var i = 0; i < 46; i++) {
+    if (this.particles.length > 260) break;
+    var a = this.rng() * TAU, sp = 80 + this.rng() * 320;
+    this.particles.push({
+      type: this.rng() < 0.45 ? 'spark' : 'fire',
+      x: x, y: y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+      life: 0.5 + this.rng() * 0.8, age: 0, size: 3 + this.rng() * 7
+    });
+  }
+  for (var j = 0; j < 14; j++) {
+    this.particles.push({
+      type: 'smoke', x: x + (this.rng() - 0.5) * 40, y: y + (this.rng() - 0.5) * 60,
+      vx: (this.rng() - 0.5) * 90, vy: -40 - this.rng() * 80,
+      life: 1.2 + this.rng() * 0.8, age: 0, size: 12 + this.rng() * 16
+    });
+  }
+};
+Game.prototype.updateParticles = function (dt) {
+  for (var i = this.particles.length - 1; i >= 0; i--) {
+    var p = this.particles[i];
+    p.age += dt;
+    if (p.age >= p.life) { this.particles.splice(i, 1); continue; }
+    p.x += p.vx * dt; p.y += p.vy * dt;
+    if (p.type === 'fire') { p.vx *= (1 - dt * 2); p.vy *= (1 - dt * 2); }
+  }
+};
+Game.prototype.updateTrails = function (dt) {
+  for (var i = this.trails.length - 1; i >= 0; i--) {
+    var t = this.trails[i];
+    t.age += dt; t.y += this.speed * dt * 0.9;
+    if (t.age >= t.life) this.trails.splice(i, 1);
+  }
+};
+
+/* ---------------- renderer ---------------- */
+function ensureSprites(game) {
+  if (game.sprites || !HAS_DOM()) return;
+  game.sprites = {
+    player: {},
+    traffic: {},
+    vignette: null, vw: 0, vh: 0
+  };
+  for (var i = 0; i < CARS.length; i++) game.sprites.player[CARS[i].id] = playerSprite(CARS[i]);
+}
+function trafficSpriteFor(game, c) {
+  var key = c.color + (c.wide ? 'W' : '');
+  if (!game.sprites.traffic[key]) game.sprites.traffic[key] = trafficSprite(c.color, c.wide);
+  return game.sprites.traffic[key];
+}
+function vignetteFor(game, ctx) {
+  var s = game.sprites;
+  if (!s.vignette || s.vw !== game.W || s.vh !== game.H) {
+    var c = document.createElement('canvas');
+    c.width = game.W; c.height = game.H;
+    var x = c.getContext('2d');
+    var g = x.createRadialGradient(game.W/2, game.H/2, Math.min(game.W, game.H)*0.35, game.W/2, game.H/2, Math.max(game.W, game.H)*0.75);
+    g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(2,0,10,0.55)');
+    x.fillStyle = g; x.fillRect(0, 0, game.W, game.H);
+    s.vignette = c; s.vw = game.W; s.vh = game.H;
+  }
+  return s.vignette;
+}
+
+function render(ctx, game) {
+  var W = game.W, H = game.H;
+  ensureSprites(game);
+  ctx.save();
+  if (game.shake > 0.2) ctx.translate((Math.random() - 0.5) * game.shake, (Math.random() - 0.5) * game.shake);
+
+  // sky/ground base
+  var bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, '#0a0618'); bg.addColorStop(0.55, '#070313'); bg.addColorStop(1, '#040109');
+  ctx.fillStyle = bg; ctx.fillRect(-20, -20, W + 40, H + 40);
+
+  var rx = game.roadX(), rw = game.roadW();
+
+  // shoulder synthwave grid (scrolling)
+  ctx.strokeStyle = 'rgba(139,92,246,0.16)'; ctx.lineWidth = 1;
+  var gridStep = 46, off = game.roadScroll % gridStep;
+  ctx.beginPath();
+  for (var gy = -gridStep + off; gy < H + gridStep; gy += gridStep) {
+    ctx.moveTo(0, gy); ctx.lineTo(rx - 6, gy);
+    ctx.moveTo(rx + rw + 6, gy); ctx.lineTo(W, gy);
+  }
+  ctx.stroke();
+  // converging verticals on shoulders
+  ctx.strokeStyle = 'rgba(139,92,246,0.10)';
+  ctx.beginPath();
+  for (var vx = 0; vx <= 6; vx++) {
+    var lx = (rx - 10) * vx / 6, rx2 = rx + rw + 10 + (W - rx - rw - 10) * vx / 6;
+    ctx.moveTo(lx, 0); ctx.lineTo(lx * 0.7, H);
+    ctx.moveTo(rx2, 0); ctx.lineTo(rx2 + (W - rx2) * 0.3, H);
+  }
+  ctx.stroke();
+
+  // asphalt
+  ctx.fillStyle = '#0b0b14';
+  ctx.fillRect(rx, -20, rw, H + 40);
+  // subtle asphalt texture bands
+  ctx.fillStyle = 'rgba(255,255,255,0.018)';
+  for (var by = -48 + (game.roadScroll % 96); by < H + 48; by += 96) ctx.fillRect(rx, by, rw, 44);
+
+  // neon edges
+  ctx.fillStyle = '#ff2d95';
+  ctx.fillRect(rx - 5, -20, 5, H + 40);
+  ctx.fillStyle = '#22d3ee';
+  ctx.fillRect(rx + rw, -20, 5, H + 40);
+  ctx.fillStyle = 'rgba(255,45,149,0.25)';
+  ctx.fillRect(rx - 11, -20, 6, H + 40);
+  ctx.fillStyle = 'rgba(34,211,238,0.25)';
+  ctx.fillRect(rx + rw + 5, -20, 6, H + 40);
+
+  // lane dashes
+  ctx.fillStyle = 'rgba(196,132,252,0.5)';
+  var dashOff = game.roadScroll % 56;
+  for (var l = 1; l < TUNE.lanes; l++) {
+    var lx3 = rx + rw * l / TUNE.lanes;
+    for (var dy = -56 + dashOff; dy < H + 56; dy += 56) ctx.fillRect(lx3 - 2, dy, 4, 30);
+  }
+
+  var cx = W / 2;
+
+  // gates
+  for (var gi = 0; gi < game.gates.length; gi++) {
+    var g = game.gates[gi];
+    ctx.fillStyle = '#4ade80';
+    ctx.fillRect(g.x - g.gap / 2 - 8, g.y - 46, 8, 92);
+    ctx.fillRect(g.x + g.gap / 2, g.y - 46, 8, 92);
+    ctx.fillStyle = 'rgba(74,222,128,0.35)';
+    ctx.fillRect(g.x - g.gap / 2 - 8, g.y - 4, g.gap + 16, 8);
+    ctx.fillStyle = 'rgba(74,222,128,0.9)';
+    ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('GATE', g.x, g.y - 52);
+  }
+
+  // tire trails
+  for (var ti = 0; ti < game.trails.length; ti++) {
+    var tr = game.trails[ti], ta = 1 - tr.age / tr.life;
+    ctx.strokeStyle = 'rgba(20,20,30,' + (0.55 * ta).toFixed(3) + ')';
+    ctx.lineWidth = tr.w * ta + 1;
+    ctx.beginPath(); ctx.moveTo(tr.x, tr.y - 14); ctx.lineTo(tr.x, tr.y + 6); ctx.stroke();
+    ctx.strokeStyle = 'rgba(168,85,247,' + (0.18 * ta).toFixed(3) + ')';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(tr.x, tr.y - 14); ctx.lineTo(tr.x, tr.y + 6); ctx.stroke();
+  }
+
+  // traffic
+  for (var i = 0; i < game.traffic.length; i++) {
+    var c = game.traffic[i];
+    var spr = trafficSpriteFor(game, c);
+    ctx.drawImage(spr, c.x - spr.width / 4, c.y - spr.height / 4, spr.width / 2, spr.height / 2);
+    if (c.blinker > 0 && Math.floor(game.t * 6) % 2 === 0) {
+      ctx.fillStyle = '#fbbf24';
+      var bx = c.x + (c.targetLane > c.lane ? c.w / 2 - 4 : -c.w / 2 + 4);
+      ctx.fillRect(bx - 3, c.y - 6, 6, 12);
+    }
+  }
+
+  // player
+  var px = cx + game.playerX, py = game.playerY();
+  var ps = game.sprites.player[game.carDef.id] || game.sprites.player.volt;
+  // headlight beam
+  ctx.globalAlpha = 0.5 + game.speedNorm * 0.3;
+  ctx.drawImage(ps.beam, px - 60, py - 200, 120, 200);
+  ctx.globalAlpha = 1;
+  ctx.save();
+  ctx.translate(px, py);
+  ctx.rotate(game.steer * 0.30 + clamp(game.vx / 900, -1, 1) * 0.35);
+  ctx.drawImage(ps.car, -26, -46, 52, 92);
+  ctx.restore();
+
+  // particles
+  for (var pi = 0; pi < game.particles.length; pi++) {
+    var p = game.particles[pi], pa = 1 - p.age / p.life;
+    if (p.type === 'smoke') {
+      ctx.fillStyle = 'rgba(120,110,150,' + (0.30 * pa).toFixed(3) + ')';
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.size * (1 + p.age), 0, TAU); ctx.fill();
+    } else if (p.type === 'spark') {
+      ctx.fillStyle = 'rgba(255,200,80,' + pa.toFixed(3) + ')';
+      ctx.fillRect(p.x - 1.5, p.y - 1.5, 3, 3);
+    } else {
+      var fg = ctx.createRadialGradient(p.x, p.y, 1, p.x, p.y, p.size * 2 * pa + 2);
+      fg.addColorStop(0, 'rgba(255,230,150,' + pa.toFixed(3) + ')');
+      fg.addColorStop(0.5, 'rgba(255,120,40,' + (pa * 0.8).toFixed(3) + ')');
+      fg.addColorStop(1, 'rgba(255,60,20,0)');
+      ctx.fillStyle = fg;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.size * 2 * pa + 2, 0, TAU); ctx.fill();
+    }
+  }
+
+  // speed lines
+  if (game.speedNorm > 0.62 || game.boostT > 0) {
+    var inten = game.boostT > 0 ? 1 : (game.speedNorm - 0.62) * 2.2;
+    ctx.strokeStyle = 'rgba(255,255,255,' + (0.28 * inten).toFixed(3) + ')';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (var si = 0; si < 12; si++) {
+      var sx = Math.random() * W, sy = Math.random() * H, len = 40 + Math.random() * 90 * inten;
+      ctx.moveTo(sx, sy); ctx.lineTo(sx, sy + len);
+    }
+    ctx.stroke();
+  }
+
+  // boost aura
+  if (game.boostT > 0) {
+    ctx.strokeStyle = 'rgba(34,211,238,0.8)'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.ellipse(px, py, 40, 58, 0, 0, TAU); ctx.stroke();
+  }
+
+  ctx.restore(); // un-shake
+
+  if (HAS_DOM()) ctx.drawImage(vignetteFor(game, ctx), 0, 0, W, H);
+
+  /* HUD */
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#fff';
+  ctx.font = '900 30px system-ui';
+  ctx.shadowColor = '#22d3ee'; ctx.shadowBlur = 12;
+  ctx.fillText(Math.round(game.score).toLocaleString('en-GB'), 14, 40);
+  ctx.shadowBlur = 0;
+  ctx.font = '700 13px system-ui'; ctx.fillStyle = '#a78bfa';
+  ctx.fillText(game.mode === 'trial' ? 'TIME TRIAL' : (game.mode === 'daily' ? 'DAILY' : 'ENDLESS'), 14, 60);
+
+  ctx.textAlign = 'right';
+  ctx.fillStyle = '#f0f'; ctx.font = '900 22px system-ui';
+  ctx.shadowColor = '#f0f'; ctx.shadowBlur = 10;
+  ctx.fillText(Math.round((game.boostT > 0 ? game.speed * TUNE.boostMult : game.speed) * 0.22) + ' KM/H', W - 14, 40);
+  ctx.shadowBlur = 0;
+
+  // trial timer
+  if (game.mode === 'trial' && game.phase === 'run') {
+    ctx.textAlign = 'center';
+    ctx.fillStyle = game.trialT < 10 ? '#ff4444' : '#4ade80';
+    ctx.font = '900 34px system-ui';
+    ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 14;
+    ctx.fillText(Math.ceil(game.trialT) + 's', cx, 44);
+    ctx.shadowBlur = 0;
+  }
+
+  // combo
+  if (game.combo >= 2) {
+    var pulse = 1 + Math.sin(game.t * 10) * 0.08;
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = '900 ' + Math.round(34 * pulse) + 'px system-ui';
+    ctx.shadowColor = '#f59e0b'; ctx.shadowBlur = 16;
+    ctx.fillText('x' + game.combo + ' COMBO', cx, 108);
+    ctx.shadowBlur = 0;
+    ctx.font = '700 12px system-ui'; ctx.fillStyle = '#fde68a';
+    ctx.fillText(game.touching ? 'RELEASE TO BANK + BOOST' : 'BANKED', cx, 128);
+  }
+
+  // nitro bar
+  var bw = Math.min(W * 0.62, 300), bx0 = cx - bw / 2, by0 = H - 118;
+  ctx.fillStyle = 'rgba(255,255,255,0.12)';
+  ctx.fillRect(bx0, by0, bw, 10);
+  var nfrac = game.nitro / game.nitroCap;
+  var ng = ctx.createLinearGradient(bx0, 0, bx0 + bw, 0);
+  ng.addColorStop(0, '#22d3ee'); ng.addColorStop(1, '#f0f');
+  ctx.fillStyle = ng;
+  ctx.fillRect(bx0, by0, bw * nfrac, 10);
+  if (nfrac >= TUNE.nitroFireMin / game.nitroCap) {
+    ctx.fillStyle = '#fff'; ctx.font = '800 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('NITRO READY — RELEASE!', cx, by0 - 8);
+  } else {
+    ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.font = '700 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('DRIFT TO CHARGE NITRO', cx, by0 - 8);
+  }
+
+  // flash text
+  if (game.flash > 0) {
+    ctx.textAlign = 'center';
+    ctx.globalAlpha = clamp(game.flash, 0, 1);
+    ctx.fillStyle = '#fff';
+    ctx.font = '900 26px system-ui';
+    ctx.shadowColor = '#ff2d95'; ctx.shadowBlur = 18;
+    ctx.fillText(game.flashText, cx, H * 0.42);
+    ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+  }
+
+  // crash red flash
+  if (game.phase === 'crash') {
+    ctx.fillStyle = 'rgba(255,30,30,' + (0.25 * (game.crashT / 1.35)).toFixed(3) + ')';
+    ctx.fillRect(0, 0, W, H);
+    ctx.textAlign = 'center'; ctx.fillStyle = '#ff4444';
+    ctx.font = '900 44px system-ui'; ctx.shadowColor = '#f00'; ctx.shadowBlur = 24;
+    ctx.fillText('WRECKED', cx, H * 0.4);
+    ctx.shadowBlur = 0;
+  }
+}
+
+/* ---------------- browser boot ---------------- */
+function boot() {
+  if (!HAS_DOM()) return;
+  var canvas = document.getElementById('game');
+  var ctx = canvas.getContext('2d');
+  var storage = null;
+  try { storage = window.localStorage; } catch (e) { storage = null; }
+  var game = new Game(storage);
+  window.__neonDrift = game;
+
+  var DPR = 1;
+  function resize() {
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    var w = window.innerWidth, h = window.innerHeight;
+    canvas.width = Math.round(w * DPR); canvas.height = Math.round(h * DPR);
+    canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+    game.resize(w, h);
+  }
+  window.addEventListener('resize', resize);
+  window.addEventListener('orientationchange', function () { setTimeout(resize, 120); });
+  resize();
+
+  // screens
+  var screens = {
+    menu: document.getElementById('scr-menu'),
+    garage: document.getElementById('scr-garage'),
+    over: document.getElementById('scr-over'),
+    pause: document.getElementById('scr-pause')
+  };
+  function show(name) {
+    for (var k in screens) screens[k].classList.toggle('hidden', k !== name);
+    canvas.classList.toggle('dim', name !== null);
+  }
+  function refreshMenu() {
+    document.getElementById('m-coins').textContent = game.save.coins.toLocaleString('en-GB');
+    document.getElementById('m-best').textContent = Math.round(game.save.best.endless).toLocaleString('en-GB');
+    document.getElementById('m-best-trial').textContent = Math.round(game.save.best.trial).toLocaleString('en-GB');
+    var today = new Date().toISOString().slice(0, 10);
+    document.getElementById('m-daily').textContent = (game.save.daily.date === today && game.save.daily.played)
+      ? 'DONE: ' + Math.round(game.save.daily.best).toLocaleString('en-GB') : 'PLAY TODAY';
+    document.getElementById('m-car').textContent = carById(game.save.selectedCar).name;
+  }
+
+  function renderGarage() {
+    var list = document.getElementById('g-cars');
+    list.innerHTML = '';
+    CARS.forEach(function (car) {
+      var owned = !!(game.save.cars[car.id] && game.save.cars[car.id].unlocked);
+      var sel = game.save.selectedCar === car.id;
+      var div = document.createElement('div');
+      div.className = 'car-card' + (sel ? ' sel' : '');
+      div.style.setProperty('--cc', car.color);
+      function bar(v) {
+        var pct = Math.round(clamp(v / 1.7, 0, 1) * 100);
+        return '<div class="stat"><div class="statfill" style="width:' + pct + '%"></div></div>';
+      }
+      div.innerHTML =
+        '<div class="car-head"><span class="car-name">' + car.name + '</span>' +
+        (owned ? (sel ? '<span class="pill on">SELECTED</span>' : '<button class="btn small" data-act="select">SELECT</button>')
+               : '<button class="btn small buy" data-act="buy">' + car.price + ' 🪙</button>') + '</div>' +
+        '<div class="car-desc">' + car.desc + '</div>' +
+        '<div class="stats">' +
+        '<div class="srow"><span>SPD</span>' + bar(car.top * 1.3) + '</div>' +
+        '<div class="srow"><span>GRP</span>' + bar(car.grip) + '</div>' +
+        '<div class="srow"><span>DRF</span>' + bar(car.drift) + '</div>' +
+        '<div class="srow"><span>N2O</span>' + bar(car.nitro / 130 * 1.3) + '</div>' +
+        '</div>';
+      onTap(div.querySelector('[data-act]'), function (ev) {
+        ev.stopPropagation();
+        var act = this.getAttribute('data-act');
+        if (act === 'buy') { if (game.buyCar(car.id)) { Sfx.chime(); } else { Sfx.blip(160, 0.15, 'square', 0.08); } }
+        else game.buyCar(car.id);
+        refreshMenu(); renderGarage();
+      });
+      list.appendChild(div);
+    });
+    document.getElementById('g-coins').textContent = game.save.coins.toLocaleString('en-GB');
+    var uw = document.getElementById('g-upg');
+    uw.innerHTML = '';
+    Object.keys(UPG).forEach(function (track) {
+      var lvl = game.save.upgrades[track] || 0, maxed = lvl >= UPG[track].max;
+      var cost = maxed ? 0 : upgradeCost(track, lvl);
+      var row = document.createElement('div');
+      row.className = 'upg-row';
+      var pips = '';
+      for (var i = 0; i < UPG[track].max; i++) pips += '<span class="pip' + (i < lvl ? ' on' : '') + '"></span>';
+      row.innerHTML = '<div class="upg-info"><div class="upg-name">' + UPG[track].name + '</div>' +
+        '<div class="upg-desc">' + UPG[track].desc + '</div><div class="pips">' + pips + '</div></div>' +
+        (maxed ? '<span class="pill on">MAX</span>' : '<button class="btn small buy">' + cost + ' 🪙</button>');
+      if (!maxed) onTap(row.querySelector('button'), function () {
+        if (game.buyUpgrade(track)) Sfx.chime(); else Sfx.blip(160, 0.15, 'square', 0.08);
+        renderGarage();
+      });
+      uw.appendChild(row);
+    });
+  }
+
+  function startRun(mode) {
+    var seed;
+    if (mode === 'daily') seed = hashStr(new Date().toISOString().slice(0, 10));
+    Sfx.init(); Sfx.resume();
+    game.startRun(mode, seed);
+    show(null);
+    document.getElementById('hud-pause').classList.remove('hidden');
+  }
+
+  onTap(document.getElementById('b-endless'), function () { startRun('endless'); });
+  onTap(document.getElementById('b-trial'), function () { startRun('trial'); });
+  onTap(document.getElementById('b-daily'), function () { startRun('daily'); });
+  onTap(document.getElementById('b-garage'), function () { renderGarage(); show('garage'); });
+  onTap(document.getElementById('b-back'), function () { refreshMenu(); show('menu'); });
+  onTap(document.getElementById('b-restart'), function () { startRun(game.mode); });
+  onTap(document.getElementById('b-menu2'), function () {
+    document.getElementById('hud-pause').classList.add('hidden');
+    refreshMenu(); show('menu');
+  });
+  onTap(document.getElementById('b-mute'), function () {
+    game.save.muted = !game.save.muted;
+    storeSave(game.storage, game.save);
+    Sfx.setMuted(game.save.muted);
+    this.textContent = game.save.muted ? '🔇' : '🔊';
+  });
+  onTap(document.getElementById('hud-pause'), function () {
+    game.paused = true; show('pause');
+  });
+  onTap(document.getElementById('b-resume'), function () {
+    game.paused = false; show(null);
+  });
+  onTap(document.getElementById('b-quit'), function () {
+    game.paused = false; game.phase = 'idle';
+    document.getElementById('hud-pause').classList.add('hidden');
+    refreshMenu(); show('menu');
+  });
+  document.getElementById('b-mute').textContent = game.save.muted ? '🔇' : '🔊';
+  Sfx.setMuted(game.save.muted);
+
+  function showOver() {
+    document.getElementById('hud-pause').classList.add('hidden');
+    document.getElementById('o-score').textContent = Math.round(game.score).toLocaleString('en-GB');
+    document.getElementById('o-banked').textContent = Math.round(game.banked).toLocaleString('en-GB');
+    document.getElementById('o-near').textContent = game.nearMisses;
+    document.getElementById('o-gates').textContent = game.gatesHit;
+    document.getElementById('o-coins').textContent = '+' + game.coinsEarned + ' 🪙';
+    document.getElementById('o-best').textContent = game.newBest ? '★ NEW BEST! ★' : '';
+    document.getElementById('o-title').textContent = game.mode === 'trial' ? "TIME'S UP!" : 'WRECKED!';
+    show('over');
+  }
+
+  // touch input — one thumb
+  function tpos(e) {
+    var t = e.changedTouches[0];
+    return t.clientX;
+  }
+  canvas.addEventListener('touchstart', function (e) {
+    e.preventDefault();
+    Sfx.init(); Sfx.resume();
+    if (game.phase === 'run' && !game.paused) game.touchStart(tpos(e));
+  }, { passive: false });
+  canvas.addEventListener('touchmove', function (e) {
+    e.preventDefault();
+    if (game.touching) game.touchMove(tpos(e));
+  }, { passive: false });
+  function endTouch(e) {
+    e.preventDefault();
+    game.touchEnd();
+  }
+  canvas.addEventListener('touchend', endTouch, { passive: false });
+  canvas.addEventListener('touchcancel', endTouch, { passive: false });
+  // mouse fallback
+  canvas.addEventListener('mousedown', function (e) {
+    Sfx.init(); Sfx.resume();
+    if (game.phase === 'run' && !game.paused) game.touchStart(e.clientX);
+  });
+  canvas.addEventListener('mousemove', function (e) { if (game.touching) game.touchMove(e.clientX); });
+  canvas.addEventListener('mouseup', function () { game.touchEnd(); });
+
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden && game.phase === 'run' && !game.paused) {
+      game.paused = true; show('pause');
+    }
+  });
+
+  // main loop
+  var last = performance.now();
+  function frame(now) {
+    requestAnimationFrame(frame);
+    var dt = (now - last) / 1000; last = now;
+    if (!game.paused) {
+      game.update(dt);
+      if (game.phase === 'over' && screens.over.classList.contains('hidden')) showOver();
+    }
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    if (game.phase === 'idle') {
+      // menu backdrop: animated road
+      game.roadScroll = (game.roadScroll + 200 * dt) % 48;
+      game.t += dt;
+      render(ctx, game);
+    } else {
+      render(ctx, game);
+    }
+    if (game.paused) {
+      ctx.fillStyle = 'rgba(0,0,0,0.0)';
+    }
+  }
+  refreshMenu();
+  show('menu');
+  requestAnimationFrame(frame);
+}
+
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+}
+
+/* node exports for headless tests */
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    Game: Game, CARS: CARS, UPG: UPG, TUNE: TUNE,
+    carById: carById, upgradeCost: upgradeCost,
+    loadSave: loadSave, defaultSave: defaultSave,
+    mulberry32: mulberry32, hashStr: hashStr, clamp: clamp,
+    onTap: onTap,
+    render: render
+  };
+}
+})();
+
+</script>
+</body>
+</html>
