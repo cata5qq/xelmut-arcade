@@ -11,8 +11,8 @@ html,body{margin:0;height:100%;overflow:hidden;background:#0a0c14;font-family:-a
 .hpbar i{display:block;height:100%;background:#30d158;border-radius:2px}
 #hint{position:fixed;bottom:10px;left:0;right:0;text-align:center;font-size:12px;opacity:.55;pointer-events:none;z-index:5}
 </style></head><body><div id="app"></div><div id="bars"></div>
-<div id="hud"><div class="tag">WARCRAFT-STYLE 3D</div><h1>🧛 VAMPIRE SLAYERS</h1><p>Fixed camera · click to select · right-click to move / attack</p></div>
-<div id="hint">Left-click: select unit &nbsp;·&nbsp; Right-click: move / attack &nbsp;·&nbsp; Camera stays still</div>
+<div id="hud"><div class="tag">WARCRAFT-STYLE 3D</div><h1>🧛 VAMPIRE SLAYERS</h1><p>Camera follows your unit · click to select · right-click to move / attack</p></div>
+<div id="hint">Left-click: select unit &nbsp;·&nbsp; Right-click: move / attack &nbsp;·&nbsp; Camera follows your unit</div>
 <script>/**
  * @license
  * Copyright 2010-2023 Three.js Authors
@@ -24,7 +24,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#0a0c14;font-family:-a
 const V3=(x,y,z)=>new THREE.Vector3(x,y,z);
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x0a0c14);
-scene.fog=new THREE.Fog(0x0a0c14,25,55);
+scene.fog=new THREE.Fog(0x0a0c14,48,100);
 const camera=new THREE.PerspectiveCamera(45,innerWidth/innerHeight,0.1,120);
 const renderer=new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(innerWidth,innerHeight);
@@ -32,13 +32,14 @@ renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.outputEncoding=THREE.sRGBEncoding;
 document.getElementById('app').appendChild(renderer.domElement);
 // FIXED camera: near top-down, 17deg off vertical (WC3 style)
-const tgt=V3(0,0,-0.5),DIST=17,ELEV=73*Math.PI/180;
-camera.position.set(tgt.x,tgt.y+DIST*Math.sin(ELEV),tgt.z+DIST*Math.cos(ELEV));
-camera.lookAt(tgt);
+const tgt=V3(0,0,-0.5),DIST=34,ELEV=73*Math.PI/180;
+const camOff=V3(0,DIST*Math.sin(ELEV),DIST*Math.cos(ELEV));
+function camPlace(){camera.position.set(tgt.x+camOff.x,tgt.y+camOff.y,tgt.z+camOff.z);camera.lookAt(tgt);}
+camPlace();
 // lights
 scene.add(new THREE.HemisphereLight(0x8a9ac8,0x11100c,0.75));
 const sun=new THREE.DirectionalLight(0xfff2dd,1.0);sun.position.set(-8,16,6);sun.castShadow=true;
-sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-16;sun.shadow.camera.right=16;sun.shadow.camera.top=16;sun.shadow.camera.bottom=-16;
+sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-30;sun.shadow.camera.right=30;sun.shadow.camera.top=30;sun.shadow.camera.bottom=-30;
 scene.add(sun);
 const fill=new THREE.DirectionalLight(0x4a5ad8,0.25);fill.position.set(8,6,-8);scene.add(fill);
 // ground: procedural stone tiles
@@ -48,13 +49,13 @@ function groundTex(){const c=document.createElement('canvas');c.width=c.height=5
   const v=30+Math.random()*14;g.fillStyle=`rgb(${v+6},${v+4},${v+12})`;g.fillRect(x+3,y+3,122,122);
   for(let i=0;i<40;i++){g.fillStyle=`rgba(0,0,0,${Math.random()*0.15})`;g.fillRect(x+Math.random()*128,y+Math.random()*128,2,2);}
   g.strokeStyle='rgba(0,0,0,0.5)';g.lineWidth=3;g.strokeRect(x+1.5,y+1.5,125,125);}
- const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(5,5);t.encoding=THREE.sRGBEncoding;return t;}
-const ground=new THREE.Mesh(new THREE.PlaneGeometry(44,44),new THREE.MeshStandardMaterial({map:groundTex(),roughness:0.95}));
+ const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(10,10);t.encoding=THREE.sRGBEncoding;return t;}
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(90,90),new THREE.MeshStandardMaterial({map:groundTex(),roughness:0.95}));
 ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
 // scatter rocks/grass tufts
 const rockMat=new THREE.MeshStandardMaterial({color:0x3d4048,roughness:0.95});
 for(let i=0;i<26;i++){const r=new THREE.Mesh(new THREE.DodecahedronGeometry(0.2+Math.random()*0.4,0),rockMat);
- r.position.set((Math.random()-.5)*38,0.15,(Math.random()-.5)*34);r.castShadow=r.receiveShadow=true;scene.add(r);}
+ r.position.set((Math.random()-.5)*70,0.15,(Math.random()-.5)*60);r.castShadow=r.receiveShadow=true;scene.add(r);}
 // helpers
 function J(parent,x,y,z){const o=new THREE.Object3D();o.userData.j=true;o.position.set(x,y,z);parent.add(o);return o;}
 function M(geo,mat,parent,x,y,z){const m=new THREE.Mesh(geo,mat);m.position.set(x||0,y||0,z||0);m.castShadow=true;parent.add(m);return m;}
@@ -203,6 +204,17 @@ addEventListener('pointerdown',e=>{
 });
 function dmg(tgt,amount){if(tgt.dead)return;tgt.hp-=amount;tgt.flash=0.12;
  if(tgt.hp<=0){tgt.hp=0;tgt.dead=true;tgt.deathT=0;if(selected===tgt){selected=null;ring.visible=false;}}}
+// camera follows the controlled unit (WC3 style)
+const camTgt=new THREE.Vector3();
+function camFollow(dt){
+ const u=(selected&&!selected.dead)?selected:(typeof hero!=='undefined'?hero:null);
+ if(!u||u.dead)return;
+ camTgt.set(u.g.position.x,0,u.g.position.z-0.5);
+ tgt.lerp(camTgt,Math.min(1,dt*3));
+ camPlace();
+ sun.position.set(tgt.x-8,tgt.y+16,tgt.z+6);
+ sun.target.position.copy(tgt);sun.target.updateMatrixWorld();
+}
 // simple enemy AI
 function ai(u,t){
  if(u.dead||u.team!=='red')return;
@@ -215,6 +227,7 @@ const clock=new THREE.Clock();const pv=new THREE.Vector3();
 function proj(x,y,z){pv.set(x,y,z).project(camera);return{x:(pv.x*0.5+0.5)*innerWidth,y:(-pv.y*0.5+0.5)*innerHeight,pv};}
 function frame(){
  const dt=Math.min(0.05,clock.getDelta()),t=clock.elapsedTime;
+ camFollow(dt);
  units.forEach(u=>{
   ai(u,t);
   if(u.dead){u.deathT+=dt;
