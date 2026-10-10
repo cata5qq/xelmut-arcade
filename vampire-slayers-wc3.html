@@ -117,9 +117,10 @@ function makeFlyer(team,x,z){
  const h1=M(new THREE.ConeGeometry(0.07,0.35,8),hide,head,-0.2,0.3,-0.05);h1.rotation.z=0.6;
  const h2=M(new THREE.ConeGeometry(0.07,0.35,8),hide,head,0.2,0.3,-0.05);h2.rotation.z=-0.6;
  const wL=J(root,-0.35,0.25,-0.1),wR=J(root,0.35,0.25,-0.1);
- function wing(pivot,s){const w=M(new THREE.BoxGeometry(1.15,0.06,0.55),wingM,pivot,s*0.62,0,-0.25);
-  w.geometry.translate(0,0,0);const tip=M(new THREE.BoxGeometry(0.9,0.05,0.4),wingM,pivot,s*1.5,0,-0.45);
-  const band=M(new THREE.BoxGeometry(0.06,0.09,0.6),tc,pivot,s*0.35,0,-0.2);return pivot;}
+ function wing(pivot,s){const w=M(new THREE.BoxGeometry(1.1,0.07,0.6),wingM,pivot,s*0.6,0,-0.2);
+  const tip=M(new THREE.BoxGeometry(0.95,0.05,0.42),wingM,pivot,s*1.45,0.02,-0.62);
+  tip.rotation.y=s*0.5;tip.scale.set(1,1,0.75);
+  const band=M(new THREE.BoxGeometry(0.07,0.1,0.62),tc,pivot,s*0.32,0,-0.18);return pivot;}
  wing(wL,-1);wing(wR,1);
  const tail=M(new THREE.ConeGeometry(0.12,0.8,8),hide,root,0,-0.15,-0.65);tail.rotation.x=-Math.PI/2.3;
  const u={g,team,type:'flyer',hp:320,maxHp:320,dmg:20,range:2.1,speed:4.2,radius:0.6,name:'Hexspitter',
@@ -170,10 +171,10 @@ function makeBeast(team,x,z,boss){
  units.push(u);pickable(g,u,1.6);return u;
 }
 // ---------- armies ----------
-const hero=makeHero('blue',-3,4);
-const allyFlyer=makeFlyer('blue',3,5);
-const boss=makeBeast('red',0,-6,true);
-const enemyFlyer=makeFlyer('red',-5,-4);
+const hero=makeHero('blue',-2.5,2.5);
+const allyFlyer=makeFlyer('blue',2.5,3);
+const boss=makeBeast('red',0,-5,true);
+const enemyFlyer=makeFlyer('red',-4.5,-3.5);
 // selection ring
 const ring=new THREE.Mesh(new THREE.RingGeometry(0.85,1.0,40),new THREE.MeshBasicMaterial({color:0x22ff44,transparent:true,opacity:0.9,side:THREE.DoubleSide}));
 ring.rotation.x=-Math.PI/2;ring.position.y=0.03;ring.visible=false;scene.add(ring);
