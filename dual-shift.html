@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Dual Shift 🥫⚡</title>
+<style>
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { margin:0; font-family:-apple-system,system-ui,sans-serif; background:#0b0b0d; color:#f2f2f2;
+         display:flex; flex-direction:column; align-items:center; min-height:100vh; padding:20px; }
+  h1 { font-size:1.5rem; margin:8px 0 2px; letter-spacing:1px; }
+  .sub { color:#9a9aa0; font-size:.88rem; margin-bottom:14px; text-align:center; max-width:440px; }
+  #grid { width:min(90vw,400px); aspect-ratio:1/1; display:grid; grid-template-columns:1fr 1fr;
+          gap:14px; }
+  .pad { border-radius:22px; display:flex; align-items:center; justify-content:center;
+         font-size:2.4rem; user-select:none; cursor:pointer; touch-action:manipulation;
+         transition:filter .12s, transform .08s, background .12s; opacity:.45; }
+  .pad.on { opacity:1; filter:brightness(1.35) drop-shadow(0 0 18px currentColor); }
+  .pad.go { opacity:1; background:#0f3d0f !important; color:#fff !important;
+            border:2px solid #37e53c !important; filter:brightness(1.5) drop-shadow(0 0 22px #37e53c); }
+  .pad.nogo { opacity:1; background:#3d0f12 !important; color:#ff6b74 !important;
+              border:2px solid #a02f37 !important; filter:brightness(1.1); }
+  .pad.hit { opacity:1; background:#e8f4f8 !important; color:#04120a !important;
+             filter:brightness(1.6) drop-shadow(0 0 22px #fff); }
+  .pad.shake { animation:shk .3s; }
+  @keyframes shk { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-7px)}
+                   50%{transform:translateX(7px)} 75%{transform:translateX(-4px)} }
+  #p0 { background:#0f3d0f; color:#37e53c; border:2px solid #1f7a24; }
+  #p1 { background:#123043; color:#7fd6ff; border:2px solid #2f7fae; }
+  #p2 { background:#3d0f12; color:#ff6b74; border:2px solid #a02f37; }
+  #p3 { background:#2a2a30; color:#e8f4f8; border:2px solid #8a8a95; }
+  #hud { margin-top:14px; font-size:1.05rem; color:#cfcfd8; text-align:center; line-height:1.7; }
+  #msg { margin-top:10px; min-height:2.2em; font-size:1.05rem; font-weight:700; text-align:center; max-width:440px; }
+  #react { margin-top:2px; min-height:1.4em; font-size:.95rem; color:#9a9aa0; text-align:center; }
+  button { margin-top:10px; background:#00e054; border:none; border-radius:12px; padding:14px 34px;
+           font-size:1.1rem; font-weight:800; cursor:pointer; color:#04120a; }
+  #snd { background:#2a2a30; color:#e8e8ee; padding:10px 20px; font-size:.9rem; }
+  .best { color:#ffd60a; font-weight:800; }
+  .sc { color:#00e054; font-weight:800; }
+</style>
+</head>
+<body>
+  <h1>🥫⚡ DUAL SHIFT</h1>
+  <div class="sub">Mind-training #3. <b>Memorize</b> the can sequence, survive the <b>tap-only-green</b> distraction drill, then <b>recall</b> the sequence. Two brain jobs at once — that's the workout.</div>
+  <div id="grid">
+    <div class="pad" id="p0">🟢</div>
+    <div class="pad" id="p1">🔵</div>
+    <div class="pad" id="p2">🔴</div>
+    <div class="pad" id="p3">⚪</div>
+  </div>
+  <div id="hud">Level <b id="lvl">1</b> · Score <b class="sc" id="scr">0</b><br><span id="bestline"></span></div>
+  <div id="react"></div>
+  <div id="msg"></div>
+  <button id="btn" onclick="startGame()">START</button>
+  <button id="snd" onclick="toggleSnd()">🔊 sound: on</button>
+
+<script>
+const GLYPHS = ['🟢','🔵','🔴','⚪'];
+const pads = [0,1,2,3].map(i => document.getElementById('p' + i));
+const msg = document.getElementById('msg'), lvlEl = document.getElementById('lvl'),
+      scrEl = document.getElementById('scr'), bestEl = document.getElementById('bestline'),
+      reactEl = document.getElementById('react'), btn = document.getElementById('btn');
+const BEST_KEY = 'dualShiftBest';
+let best = JSON.parse(localStorage.getItem(BEST_KEY) || 'null');
+let seq = [], pos = 0, level = 0, score = 0, phase = 'idle', sndOn = true, actx = null;
+let runId = 0, active = null, shown = 0, reactCount = 0, reactInterval = 900;
+let hits = 0, misses = 0, falseAlarms = 0, rtSum = 0;
+
+function tone(i) {
+  if (!sndOn) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.frequency.value = [261.6, 329.6, 392.0, 523.3, 130.8][i];
+    g.gain.setValueAtTime(0.25, actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 0.35);
+    o.connect(g); g.connect(actx.destination);
+    o.start(); o.stop(actx.currentTime + 0.35);
+  } catch (e) {}
+}
+function flash(i, ms) {
+  pads[i].classList.add('on'); tone(i);
+  setTimeout(() => pads[i].classList.remove('on'), ms * 0.75);
+}
+function upd() {
+  lvlEl.textContent = Math.max(level, 1);
+  scrEl.textContent = score;
+}
+function setBest() {
+  bestEl.innerHTML = best === null ? 'All-time best: —'
+    : 'All-time best: <span class="best">' + best + ' pts</span>';
+}
+function reactLine() {
+  reactEl.textContent = phase === 'react' || phase === 'recall'
+    ? '⚡ drill: ✅ ' + hits + ' hits · ❌ ' + falseAlarms + ' slips · 💨 ' + misses + ' missed'
+    : '';
+}
+setBest();
+
+function toggleSnd() {
+  sndOn = !sndOn;
+  document.getElementById('snd').textContent = sndOn ? '🔊 sound: on' : '🔇 sound: off';
+}
+function clearStim() {
+  pads.forEach((p, i) => { p.classList.remove('go','nogo','hit','on'); p.textContent = GLYPHS[i]; });
+  active = null;
+}
+
+function startGame() {
+  runId++;
+  seq = []; pos = 0; level = 0; score = 0;
+  hits = 0; misses = 0; falseAlarms = 0; rtSum = 0;
+  btn.style.display = 'none'; msg.textContent = ''; reactEl.textContent = '';
+  clearStim(); upd();
+  nextLevel(runId);
+}
+function nextLevel(id) {
+  if (id !== runId) return;
+  level++; pos = 0; phase = 'show';
+  upd(); reactLine();
+  msg.textContent = '👀 memorize the cans…';
+  const len = Math.min(3 + (level - 1), 9);
+  seq = [];
+  for (let k = 0; k < len; k++) seq.push(Math.floor(Math.random() * 4));
+  const speed = Math.max(720 - (level - 1) * 25, 380);
+  let t = 600;
+  seq.forEach(i => { setTimeout(() => { if (id === runId) flash(i, speed * 0.6); }, t); t += speed; });
+  setTimeout(() => startReact(id), t + 150);
+}
+function startReact(id) {
+  if (id !== runId) return;
+  phase = 'react';
+  reactCount = 12 + (level - 1) * 2;
+  reactInterval = Math.max(950 - (level - 1) * 60, 420);
+  shown = 0; hits = 0; misses = 0; falseAlarms = 0;
+  msg.textContent = '⚡ TAP only 👆 — ignore 🚫!';
+  reactLine();
+  reactTick(id);
+}
+function resolveStim() {
+  if (active && active.go && !active.tapped) {
+    misses++; score = Math.max(0, score - 10);
+  }
+  active = null;
+}
+function reactTick(id) {
+  if (id !== runId) return;
+  resolveStim();
+  if (shown >= reactCount) { startRecall(id); return; }
+  clearStim();
+  const p = Math.floor(Math.random() * 4);
+  const go = Math.random() < 0.7;
+  pads[p].classList.add(go ? 'go' : 'nogo');
+  pads[p].textContent = go ? '👆' : '🚫';
+  active = { pad: p, go: go, t0: performance.now(), tapped: false };
+  shown++; upd(); reactLine();
+  setTimeout(() => reactTick(id), reactInterval);
+}
+function startRecall(id) {
+  if (id !== runId) return;
+  clearStim();
+  phase = 'recall'; pos = 0;
+  upd(); reactLine();
+  msg.textContent = '🎯 now tap the sequence back';
+}
+pads.forEach((p, i) => p.addEventListener('pointerdown', () => {
+  if (phase === 'react' && active && !active.tapped && i === active.pad) {
+    active.tapped = true;
+    if (active.go) {
+      hits++; score += 10;
+      rtSum += performance.now() - active.t0;
+      tone(3);
+      p.classList.remove('go'); p.classList.add('hit');
+      setTimeout(() => p.classList.remove('hit'), 160);
+    } else {
+      falseAlarms++; score = Math.max(0, score - 15);
+      tone(4);
+      p.classList.add('shake');
+      setTimeout(() => p.classList.remove('shake'), 320);
+    }
+    upd(); reactLine();
+    return;
+  }
+  if (phase !== 'recall') return;
+  flash(i, 260);
+  if (i === seq[pos]) {
+    pos++; score += 5; upd();
+    if (pos === seq.length) {
+      score += 25 * level; upd();
+      phase = 'show';
+      msg.textContent = '✅ level clear! +' + (25 * level) + ' bonus';
+      const id = runId;
+      setTimeout(() => nextLevel(id), 1200);
+    }
+  } else {
+    gameOver();
+  }
+}));
+
+function gameOver() {
+  phase = 'idle';
+  runId++;
+  clearStim();
+  reactLine();
+  if (best === null || score > best) {
+    best = score; localStorage.setItem(BEST_KEY, best); setBest();
+    msg.innerHTML = '🏆 NEW BEST — ' + score + ' pts! Hades just did a victory spin. 🐕';
+  } else if (score >= best - 60) {
+    msg.textContent = '🐾 ' + score + ' pts — so close to your best (' + best + '). Lilith believes in you.';
+  } else if (score >= 250) {
+    msg.textContent = '🧠 ' + score + ' pts — proper brain workout. Crack a White and run it back?';
+  } else {
+    msg.textContent = '🥫 ' + score + ' pts — the cans out-multitasked you. Retry?';
+  }
+  btn.textContent = 'PLAY AGAIN'; btn.style.display = '';
+}
+</script>
+</body>
+</html>
