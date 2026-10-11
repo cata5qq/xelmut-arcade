@@ -23,6 +23,9 @@ body {
 }
 
 #hud {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 10;
   background: rgba(242, 228, 201, 0.92);
   border: 2px solid #3B2A20;
   outline: 1px solid #3B2A20;
@@ -151,10 +154,17 @@ body {
 }
 
 .overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: none;
+  align-items: center;
+  justify-content: center;
   background: rgba(30, 110, 122, 0.55);
 }
 
 .overlay.open {
+  display: flex;
   background: rgba(30, 110, 122, 0.55);
 }
 
@@ -910,7 +920,7 @@ function createGame() {
 function resetPlayer(g) {
   const b = g.base || { x: 500, y: 3050 };
   g.player = {
-    x: b.x, y: b.y + 200, vx: 0, vy: 0, angle: -Math.PI / 2,
+    x: b.x, y: b.y + (b.r || 150) + 130, vx: 0, vy: 0, angle: -Math.PI / 2,
     hp: 100, maxHp: 100, baseDmg: 10,
     cannons: [makeCannon('standard'), makeCannon('standard')],
     fireT: 0, alive: true, hitFlash: 0, ramT: 0, lastDmgT: -99,
