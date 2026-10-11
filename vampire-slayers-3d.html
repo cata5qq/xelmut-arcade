@@ -1018,8 +1018,9 @@ function openDraft(){
  picks.forEach(p=>{const d=document.createElement('div');d.className='card';
   const lb=draftLabel(p);
   d.innerHTML='<div class="ci">'+lb[0]+'</div><div>'+lb[1]+'</div>';
-  onTap(d,ev=>{applyDraft(p);});cards.appendChild(d);});
+  onTap(d,ev=>{try{applyDraft(p);}catch(err){closeDraft3D();}});cards.appendChild(d);});
 }
+function closeDraft3D(){G.pendingLevels=0;G.draftOpen=false;document.getElementById('lvlup').style.display='none';G.paused=false;}
 function applyDraft(p){
  if(p.kind==='newW')G.weapons.push({id:p.id,lvl:1,cd:0,evo:false});
  else if(p.kind==='upW'){const w=G.weapons.find(w=>w.id===p.id);w.lvl++;}
@@ -1315,7 +1316,7 @@ function frame(){
    continue;}
   let dx=heroU.g.position.x-e.u.g.position.x,dz=heroU.g.position.z-e.u.g.position.z;
   if(G.invisT>0){const wa=e.ph+t*0.7;dx=Math.cos(wa)*10;dz=Math.sin(wa)*10;}
-  const d=Math.hypot(dx,dz);
+  const d=Math.max(0.001,Math.hypot(dx,dz)); // playtest fix: d=0 -> NaN position (invisible undying enemy)
   e.cd-=dt;if(e.atkT>0)e.atkT-=dt;
   e.moving=false;
   if(e.ranged){
