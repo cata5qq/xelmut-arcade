@@ -1,0 +1,4010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Ship Battle</title>
+<style>
+* {
+  font-family: Georgia, serif;
+  color: #3B2A20;
+}
+
+html,
+body {
+  background: #1E6E7A;
+  font-family: Georgia, serif;
+  color: #3B2A20;
+}
+
+#game {
+  background: #1E6E7A;
+}
+
+#hud {
+  background: rgba(242, 228, 201, 0.92);
+  border: 2px solid #3B2A20;
+  outline: 1px solid #3B2A20;
+  outline-offset: 3px;
+  border-radius: 8px 4px 9px 5px;
+  font-family: Georgia, serif;
+  color: #3B2A20;
+}
+
+#hud .pill {
+  background: #F2E4C9;
+  border: 1px solid #3B2A20;
+  border-radius: 8px 4px 9px 5px;
+  font-family: Georgia, serif;
+  color: #3B2A20;
+}
+
+#hud .mats {
+  font-family: Georgia, serif;
+  color: #3B2A20;
+}
+
+#hud .mat {
+  background: #F2E4C9;
+  border: 1px solid #3B2A20;
+  border-radius: 8px 4px 9px 5px;
+  font-family: Georgia, serif;
+  color: #3B2A20;
+}
+
+#hpwrap {
+  background: #F2E4C9;
+  border: 2px solid #3B2A20;
+  outline: 1px solid #3B2A20;
+  outline-offset: 3px;
+  border-radius: 8px 4px 9px 5px;
+}
+
+#hpbar {
+  background: #C0392B;
+  border-radius: 8px 4px 9px 5px;
+}
+
+.btn {
+  background: #D9A441;
+  color: #3B2A20;
+  font-family: Georgia, serif;
+  font-weight: bold;
+  border: 2px solid #3B2A20;
+  outline: 1px solid #3B2A20;
+  outline-offset: 3px;
+  border-radius: 8px 4px 9px 5px;
+}
+
+.btn:active {
+  background: #C28F30;
+  color: #3B2A20;
+  border-color: #3B2A20;
+}
+
+#upgbtn.pulse {
+  border-color: #3B2A20;
+  outline-color: #3B2A20;
+  animation: pulse 1.8s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(217, 164, 65, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(217, 164, 65, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(217, 164, 65, 0);
+  }
+}
+
+#banner {
+  font-family: Georgia, serif;
+  color: #3B2A20;
+  background: #F2E4C9;
+  border: 2px solid #3B2A20;
+  outline: 1px solid #3B2A20;
+  outline-offset: 3px;
+  border-radius: 8px 4px 9px 5px;
+  text-shadow: 1px 1px 0 #F2E4C9, 2px 2px 0 #F2E4C9;
+  box-shadow: 0 0 0 4px #F2E4C9;
+}
+
+#banner.show {
+  background: #F2E4C9;
+  color: #3B2A20;
+}
+
+#shipinfo {
+  background: #F2E4C9;
+  border: 2px solid #3B2A20;
+  outline: 1px solid #3B2A20;
+  outline-offset: 3px;
+  border-radius: 8px 4px 9px 5px;
+  font-family: Georgia, serif;
+  color: #3B2A20;
+}
+
+#shipinfo b {
+  font-family: Georgia, serif;
+  font-weight: bold;
+  color: #3B2A20;
+}
+
+#shipinfo .heal {
+  font-family: Georgia, serif;
+  color: #3B2A20;
+}
+
+#shipinfo .buffs {
+  font-family: Georgia, serif;
+  color: #3B2A20;
+}
+
+#shipinfo .queue {
+  font-family: Georgia, serif;
+  color: #3B2A20;
+  border-top: 1px solid #3B2A20;
+}
+
+.overlay {
+  background: rgba(30, 110, 122, 0.55);
+}
+
+.overlay.open {
+  background: rgba(30, 110, 122, 0.55);
+}
+
+.card {
+  background: #F2E4C9;
+  border: 2px solid #3B2A20;
+  outline: 1px solid #3B2A20;
+  outline-offset: 3px;
+  border-radius: 8px 4px 9px 5px;
+  font-family: Georgia, serif;
+  color: #3B2A20;
+}
+
+.card h2 {
+  font-family: Georgia, serif;
+  color: #3B2A20;
+  border-bottom: 2px solid #3B2A20;
+}
+
+.card h3 {
+  font-family: Georgia, serif;
+  color: #3B2A20;
+  border-bottom: 1px solid #3B2A20;
+}
+
+.dockstatus {
+  font-family: Georgia, serif;
+  color: #3B2A20;
+}
+
+.dockstatus.docked {
+  background: #D9A441;
+  border: 1px solid #3B2A20;
+  border-radius: 8px 4px 9px 5px;
+  font-family: Georgia, serif;
+  color: #3B2A20;
+}
+
+.dockstatus.sea {
+  background: #F2E4C9;
+  border: 1px solid #3B2A20;
+  border-radius: 8px 4px 9px 5px;
+  font-family: Georgia, serif;
+  color: #3B2A20;
+}
+
+.upgrow {
+  border-bottom: 1px solid #3B2A20;
+  font-family: Georgia, serif;
+  color: #3B2A20;
+}
+
+.upgrow.afford {
+  background: rgba(217, 164, 65, 0.15);
+  color: #3B2A20;
+}
+
+.upgrow.maxed {
+  background: rgba(59, 42, 32, 0.08);
+  color: #3B2A20;
+}
+
+.upginfo .lvl {
+  font-family: Georgia, serif;
+  font-weight: bold;
+  color: #3B2A20;
+}
+
+.upginfo .sub {
+  font-family: Georgia, serif;
+  color: #3B2A20;
+}
+
+.upginfo .cost {
+  font-family: Georgia, serif;
+  color: #3B2A20;
+}
+
+.upgrow button {
+  background: #D9A441;
+  color: #3B2A20;
+  font-family: Georgia, serif;
+  font-weight: bold;
+  border: 2px solid #3B2A20;
+  outline: 1px solid #3B2A20;
+  outline-offset: 3px;
+  border-radius: 8px 4px 9px 5px;
+}
+
+.upgrow button:disabled {
+  background: #F2E4C9;
+  color: #C0392B;
+  border: 2px solid #C0392B;
+  outline: 1px solid #C0392B;
+  outline-offset: 3px;
+  border-radius: 8px 4px 9px 5px;
+}
+
+.qbar {
+  background: #F2E4C9;
+  border: 1px solid #3B2A20;
+  border-radius: 8px 4px 9px 5px;
+}
+
+.qfill {
+  background: #D9A441;
+  border-radius: 8px 4px 9px 5px;
+}
+
+.dopt {
+  background: #F2E4C9;
+  border: 2px solid #3B2A20;
+  outline: 1px solid #3B2A20;
+  outline-offset: 3px;
+  border-radius: 8px 4px 9px 5px;
+  font-family: Georgia, serif;
+  color: #3B2A20;
+}
+
+.dopt span {
+  font-family: Georgia, serif;
+  color: #3B2A20;
+}
+
+#menu .card {
+  background: #F2E4C9;
+  border: 2px solid #3B2A20;
+  outline: 1px solid #3B2A20;
+  outline-offset: 3px;
+  border-radius: 8px 4px 9px 5px;
+  font-family: Georgia, serif;
+  color: #3B2A20;
+}
+
+#menu p {
+  font-family: Georgia, serif;
+  color: #3B2A20;
+}
+
+#menu .big {
+  font-family: Georgia, serif;
+  color: #3B2A20;
+}
+
+kbd {
+  background: #F2E4C9;
+  color: #3B2A20;
+  border: 1px solid #3B2A20;
+  border-radius: 8px 4px 9px 5px;
+  box-shadow: 1px 1px 0 #3B2A20;
+  font-family: Georgia, serif;
+}
+
+#hbuffs {
+  background: #F2E4C9;
+  border: 1px solid #3B2A20;
+  border-radius: 8px 4px 9px 5px;
+  font-family: Georgia, serif;
+  color: #3B2A20;
+}
+
+#hdock {
+  background: #F2E4C9;
+  border: 1px solid #3B2A20;
+  border-radius: 8px 4px 9px 5px;
+  font-family: Georgia, serif;
+  color: #3B2A20;
+}
+EXIT:0
+
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="hud">
+  <span class="pill" id="hscore">Score 0</span>
+  <span class="pill" id="hsunk">0 sunk</span>
+  <span class="pill"><span id="hptext">100/100</span><div id="hpwrap"><div id="hpbar"></div></div></span>
+  <span class="pill" id="hbuffs"></span>
+  <span class="pill" id="hdock" style="display:none"></span>
+  <span class="pill" id="htest" style="display:none;background:#5a3a10;border-color:#ffd94d">TEST 3×</span>
+  <span class="mats">
+    <span class="mat">🪵 <b id="mplanks">0</b></span>
+    <span class="mat">💣 <b id="mcannons">0</b></span>
+    <span class="mat">🧨 <b id="mpowder">0</b></span>
+    <span class="mat">⛵ <b id="mcloth">0</b></span>
+    <span class="mat">🪙 <b id="mgold">0</b></span>
+  </span>
+  <button class="btn" id="upgbtn">Upgrades</button>
+  <button class="btn" id="hirebtn">⚔️ Hire</button>
+  <button class="btn" id="bestbtn">📖 Codex</button>
+  <button class="btn" id="pausebtn">⏸</button>
+</div>
+<div id="banner"></div>
+<div id="shipinfo"></div>
+
+<div class="overlay" id="upanel"><div class="card">
+  <h2>⚙️ Shipyard</h2>
+  <div id="dockstatus" class="dockstatus sea"></div>
+  <div id="goldline" style="margin:6px 0;font-size:14px"></div>
+  <div id="upglist"></div>
+  <h3>🏠 Home Base</h3>
+  <div id="baseupglist"></div>
+  <button class="btn" id="upgclose" style="width:100%;margin-top:6px">Back to battle</button>
+</div></div>
+
+<div class="overlay" id="bpanel"><div class="card">
+  <h2>📖 Captain's Codex</h2>
+  <p style="color:#b9cfe4;margin-bottom:8px">What sails these waters — and what they drop:</p>
+  <div id="bestlist"></div>
+  <button class="btn" id="bestclose" style="width:100%;margin-top:6px">Close</button>
+</div></div>
+
+<div class="overlay" id="boardpanel"><div class="card" id="boardlist">
+</div></div>
+
+<div class="overlay" id="dpanel"><div class="card">
+  <h2>Island Captured!</h2>
+  <p style="color:#b9cfe4;margin-bottom:8px">Choose a battle doctrine:</p>
+  <div id="dopts"></div>
+</div></div>
+
+<div class="overlay" id="paused"><div class="card" style="text-align:center">
+  <h2>Paused</h2>
+  <button class="btn" id="pausebtn2">Resume</button>
+</div></div>
+
+<div class="overlay" id="over"><div class="card" style="text-align:center">
+  <h2>☠ Ship Lost</h2>
+  <p id="ostats" style="line-height:1.9;margin:10px 0"></p>
+  <button class="btn" id="restartbtn" style="width:100%">Sail Again</button>
+</div></div>
+
+<div class="overlay" id="menu"><div class="card">
+  <h2>⚓ Ship Battle</h2>
+  <p class="big">Build your warship. Raid the islands. Rule the archipelago.</p>
+  <p>🖱️ <b>Mouse:</b> ship steers toward your cursor &nbsp;•&nbsp; ⌨️ <b>WASD / arrows:</b> sail manually &nbsp;•&nbsp; 📱 <b>Touch:</b> drag anywhere like a joystick</p>
+  <p>🔥 Cannons fire <b>automatically</b> at enemies in range (faint ring). Sink ships and smash shore defences to grab 🪵 planks, 💣 cannons, 🧨 powder, ⛵ cloth — and 🪙 <b>gold</b>.</p>
+  <p>🏝️ Every island is defended — kill <b>all</b> defenders (☠ badge), then hold the ring to <b>capture</b> it for a battle bonus. Watch for 🏹 arrows, 🔫 pistols, 🎯 rifles and 💥 shore cannons.</p>
+  <p>💰 <b>Shoot treasure chests</b> floating at sea, grab color-coded <b>sea buffs</b>, and <b>hire pirate ships</b> (⚔️ button) to fight beside you for 60s.</p>
+  <p>💣 Salvaged cannons come in qualities (Rusted → Long Nine) and wear out — keep crew aboard to repair them. Grow your hull: Dinghy → Sloop → Brig → <b>Frigate</b>.</p>
+  <p>🏠 Your <b>home base</b> (green flag) repairs you fast and builds upgrades 5× faster than at sea. Your progress <b>autosaves</b> — continue anytime.</p>
+  <p>📖 Open the <b>Codex</b> (<kbd>B</kbd>) to see what each enemy drops. <kbd>U</kbd> upgrades, <kbd>P</kbd> pause.</p>
+  <button class="btn" id="continuebtn" style="width:100%;font-size:18px;padding:14px;margin-bottom:8px;background:#2c7a3f">Continue</button>
+  <button class="btn" id="startbtn" style="width:100%;font-size:18px;padding:14px">⚓ New Voyage</button>
+</div></div>
+
+<script>
+
+/* ===== game.js ===== */
+'use strict';
+/* ============================================================
+   SHIP BATTLE v2 — persistent-map pirate sandbox (single-file browser game)
+   Cartoon-3D look via pre-rendered gradient sprites on 2D canvas.
+   Pure logic at the top is headless-testable under node.
+   ============================================================ */
+
+/* ---------------- Pure logic (no DOM) ---------------- */
+const TAU = Math.PI * 2;
+function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
+function dist(ax, ay, bx, by) { return Math.hypot(ax - bx, ay - by); }
+function angDiff(a, b) {
+  let d = (b - a) % TAU;
+  if (d > Math.PI) d -= TAU;
+  if (d < -Math.PI) d += TAU;
+  return d;
+}
+function mulberry32(seed) {
+  let t = seed >>> 0;
+  return function () {
+    t += 0x6D2B79F5;
+    let r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r ^= r + Math.imul(r ^ (r >>> 7), 61 | r);
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const MAP = 3600;
+const LEASH_DIST = 720;
+const AGGRO_DIST = 430;
+const CANNON_RANGE = 260;
+const CAPTURE_TIME = 4;
+const CAPTURE_RING_PAD = 70;
+const MAGNET_DIST = 95;
+const PICKUP_DIST = 28;
+const DOCK_PAD = 60;
+const RESPAWN_TIME = 35;
+const MAX_ENEMIES = 14;
+const REGEN_DELAY = 5;      // seconds without damage -> out-of-combat regen
+const REGEN_OOC = 0.015;    // 1.5% max HP / s out of combat
+const REGEN_COMBAT = 0.0035;// 0.35% max HP / s trickle in combat
+const SEA_UPGRADE_MULT = 5; // upgrades at sea take 5x longer than docked
+
+/* ---------------- v3: config ---------------- */
+const TEST_MODE = true;          // test phase: triple ALL material drop rates
+const DROP_MULT = TEST_MODE ? 3 : 1;
+const SAVE_KEY = 'shipbattle_save_v3';
+const SAVE_VERSION = 3;
+const AUTOSAVE_SECS = 30;
+
+/* ---------------- Ship upgrades ---------------- */
+const UPG = {
+  hull:   { mat: 'planks',  max: 20, label: 'Reinforced Hull', sub: '+20 max HP, heal 20' },
+  powder: { mat: 'powder',  max: 20, label: 'Fine Powder',      sub: '+damage (diminishing)' },
+  cloth:  { mat: 'cloth',   max: 8,  label: 'Full Sails',       sub: '+4% speed (max +35%)' },
+};
+function upgradeCost(type, level) {
+  switch (type) {
+    case 'hull':   return { planks: Math.ceil(12 * Math.pow(1.32, level)) };
+    case 'guns':   return { cannons: Math.ceil(8 * Math.pow(1.45, level)), planks: Math.ceil(10 * Math.pow(1.25, level)) };
+    case 'powder': return { powder: Math.ceil(10 * Math.pow(1.38, level)) };
+    case 'cloth':  return { cloth: Math.ceil(10 * Math.pow(1.42, level)) };
+    default: throw new Error('unknown upgrade: ' + type);
+  }
+}
+function damageAfterPowder(base, level) {
+  return Math.round(base * (1 + 0.08 * Math.pow(Math.max(0, level), 0.75)));
+}
+function speedMultForCloth(level) {
+  return 1 + Math.min(0.35, 0.04 * Math.max(0, level));
+}
+
+/* ---------------- v3: ship tiers ---------------- */
+const TIERS = [
+  { name: 'Dinghy',  ports: 2, turnDeg: 220, scale: 0.85, rad: 18 },
+  { name: 'Sloop',   ports: 3, turnDeg: 180, scale: 1.00, rad: 22 },
+  { name: 'Brig',    ports: 4, turnDeg: 150, scale: 1.18, rad: 26 },
+  { name: 'Frigate', ports: 6, turnDeg: 120, scale: 1.38, rad: 32 },
+];
+const TIER_COST = [null, { planks: 60, gold: 40 }, { planks: 160, gold: 120 }, { planks: 350, gold: 300 }];
+function tierOf(g) { return TIERS[g.tier]; }
+
+/* ---------------- v3: cannon items (quality + condition) ---------------- */
+const CANNON_Q = {
+  rusted:    { label: 'Rusted',    dmg: 0.90, rng: 1.00, glyph: '🔩' },
+  standard:  { label: 'Standard',  dmg: 1.00, rng: 1.00, glyph: '💣' },
+  carronade: { label: 'Carronade', dmg: 1.40, rng: 0.70, glyph: '💥' },
+  longnine:  { label: 'Long Nine', dmg: 0.80, rng: 1.30, glyph: '🎯' },
+};
+function rollCannonQuality(rng) {
+  const r = (rng || Math.random)();
+  return r < 0.45 ? 'rusted' : r < 0.80 ? 'standard' : r < 0.92 ? 'carronade' : 'longnine';
+}
+function makeCannon(q) { return { q: q || 'standard', cond: 100, jamT: 0 }; }
+function cannonDmgMult(c) { return CANNON_Q[c.q].dmg; }
+function cannonRngMult(c) { return CANNON_Q[c.q].rng; }
+const CANNON_WEAR = 0.25;   // condition lost per shot fired
+const CANNON_JAM_HP = 25;   // below this condition cannons can jam
+const SPARE_CAP = 8;
+
+/* ---------------- v3: crew ---------------- */
+const CREW_MAX = 12;
+function crewHireCost(crew) { return Math.ceil(20 * Math.pow(1.35, crew)); }
+function crewReloadMult(crew) { return 1 / (1 + 0.04 * crew); }
+
+/* ---------------- v3: gold & mercenaries ---------------- */
+function goldForKill(level, type) {
+  const r = Math.random;
+  if (type === 'boss' || type === 'brute') return 5 + Math.floor(r() * 4);
+  return 1 + Math.floor(r() * 3);
+}
+const MERC_TIME = 60, MERC_MAX = 3, MERC_CD = 30;
+function mercBaseCost(g) { return Math.round(60 * (1 + 0.5 * g.tier)); }
+function mercCost(g) {
+  const now = g.t;
+  g.hireHist = (g.hireHist || []).filter(t => now - t < 300);
+  const step = Math.min(g.hireHist.length, 3);
+  return Math.round(mercBaseCost(g) * [1, 1.25, 1.5, 1.75][step]);
+}
+function canHireMerc(g) {
+  return g.mercs.length < MERC_MAX && (g.hireCd || 0) <= 0 && g.gold >= mercCost(g);
+}
+function hireMerc(g) {
+  if (!canHireMerc(g)) return false;
+  g.gold -= mercCost(g);
+  g.hireHist.push(g.t);
+  g.hireCd = MERC_CD;
+  const p = g.player;
+  g.mercs.push({
+    x: p.x - 60, y: p.y + 40, vx: 0, vy: 0, angle: p.angle,
+    hp: Math.round(p.maxHp * 0.5), maxHp: Math.round(p.maxHp * 0.5),
+    guns: Math.max(1, Math.floor(p.cannons.length / 2)),
+    t: MERC_TIME, fireT: 1, hitFlash: 0, dead: false,
+  });
+  sfx('hire');
+  addToast(g, p.x, p.y - 60, '⚔️ Pirate hired — 60s');
+  return true;
+}
+
+/* ---------------- v3: sea buffs ---------------- */
+const SBUFFS = {
+  dmg:    { color: '#ff4d4d', glyph: '🔴', label: '+40% damage',      dur: 10 },
+  speed:  { color: '#4da6ff', glyph: '🔵', label: '+30% speed',       dur: 12 },
+  rate:   { color: '#3ddc68', glyph: '🟢', label: '+50% fire rate',   dur: 8 },
+  shield: { color: '#b44dff', glyph: '🟣', label: '-40% damage taken', dur: 10 },
+  gold:   { color: '#ffd94d', glyph: '🟡', label: '2× gold',          dur: 15 },
+};
+const SBUFF_CAP = 3, DMG_BONUS_CAP = 0.5;
+function activeSbuffCount(g) {
+  let n = 0;
+  for (const k in g.sbuffs) if (g.sbuffs[k] > 0) n++;
+  return n;
+}
+function applySeaBuff(g, b) {
+  if (!(b in SBUFFS)) return false;
+  if (g.sbuffs[b] <= 0 && activeSbuffCount(g) >= SBUFF_CAP) return false; // leave it floating
+  g.sbuffs[b] = SBUFFS[b].dur; // refreshes duration, never stacks potency
+  sfx('buff');
+  addToast(g, g.player.x, g.player.y - 60, SBUFFS[b].glyph + ' ' + SBUFFS[b].label);
+  return true;
+}
+function seaDmgBonus(g) {
+  let b = 0;
+  if (g.buffs.barrage > 0) b += 0.3;
+  if (g.sbuffs.dmg > 0) b += 0.4;
+  return Math.min(DMG_BONUS_CAP, b);
+}
+function powderMult(g) { return 1 + 0.08 * Math.pow(Math.max(0, g.upg.powder), 0.75); }
+
+/* ---------------- v3: treasure ---------------- */
+const TREASURE_CD_MIN = 90, TREASURE_CD_MAX = 120;
+function treasureCooldown(rng) {
+  const r = rng || Math.random;
+  return TREASURE_CD_MIN + r() * (TREASURE_CD_MAX - TREASURE_CD_MIN);
+}
+
+/* ---------------- v3: free upgrades ---------------- */
+const FREE_UPG_CHANCE = 0.03;
+function freeUpgradeChoices(g) {
+  const out = [];
+  if (g.upg.hull < UPG.hull.max) out.push('hull');
+  if (g.upg.powder < UPG.powder.max) out.push('powder');
+  if (g.upg.cloth < UPG.cloth.max) out.push('cloth');
+  if (g.tier < TIERS.length - 1) out.push('tier');
+  return out;
+}
+function grantRandomUpgrade(g) {
+  const c = freeUpgradeChoices(g);
+  if (!c.length) return false;
+  const t = c[Math.floor(Math.random() * c.length)];
+  applyUpgrade(g, t);
+  addToast(g, g.player.x, g.player.y - 70, '🎁 Free upgrade: ' + (t === 'tier' ? 'Hull Tier' : UPG[t].label) + '!');
+  sfx('buy');
+  return true;
+}
+
+/* ---------------- v3: save system ---------------- */
+function serializeGame(g) {
+  return {
+    v: SAVE_VERSION, t: g.t, playtime: g.playtime,
+    sunk: g.sunk, islandsCaptured: g.islandsCaptured, score: g.score,
+    gold: g.gold, crew: g.crew, tier: g.tier,
+    inv: Object.assign({}, g.inv), upg: Object.assign({}, g.upg), bupg: Object.assign({}, g.bupg),
+    islands: g.islands.map(i => (i.captured ? 1 : 0)),
+    player: { x: g.player.x, y: g.player.y, maxHp: g.player.maxHp,
+      cannons: g.player.cannons.map(c => ({ q: c.q, cond: Math.round(c.cond) })) },
+    spares: g.spares.map(c => ({ q: c.q, cond: Math.round(c.cond) })),
+    upgQueue: g.upgQueue.map(q => ({ type: q.type, t: q.t, total: q.total })),
+    stats: Object.assign({}, g.stats),
+  };
+}
+function saveGame(g) {
+  if (typeof localStorage === 'undefined') return;
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(serializeGame(g))); } catch (e) {}
+}
+function loadSave() {
+  if (typeof localStorage === 'undefined') return null;
+  try {
+    const s = localStorage.getItem(SAVE_KEY);
+    if (!s) return null;
+    const d = JSON.parse(s);
+    return (d && d.v === SAVE_VERSION) ? d : null;
+  } catch (e) { return null; }
+}
+function clearSave() {
+  if (typeof localStorage === 'undefined') return;
+  try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+}
+function applySave(g, d) {
+  g.t = d.t || 0; g.playtime = d.playtime || 0;
+  g.sunk = d.sunk || 0; g.islandsCaptured = d.islandsCaptured || 0; g.score = d.score || 0;
+  g.gold = d.gold || 0; g.crew = d.crew || 0; g.tier = d.tier || 0;
+  g.inv = Object.assign({ planks: 0, cannons: 0, powder: 0, cloth: 0 }, d.inv);
+  g.upg = Object.assign({ hull: 0, powder: 0, cloth: 0 }, d.upg);
+  g.bupg = Object.assign({ drydock: 0, repair: 0, battery: 0, warehouse: 0 }, d.bupg);
+  const p = g.player;
+  p.x = d.player.x; p.y = d.player.y;
+  p.maxHp = d.player.maxHp; p.hp = p.maxHp; // HP is combat state: restore full
+  p.cannons = d.player.cannons.map(c => ({ q: c.q, cond: c.cond, jamT: 0 }));
+  p.baseDmg = 10; p.alive = true; p.vx = 0; p.vy = 0;
+  g.spares = (d.spares || []).map(c => ({ q: c.q, cond: c.cond, jamT: 0 }));
+  g.upgQueue = d.upgQueue || [];
+  g.stats = Object.assign({ shotsFired: 0, hits: 0 }, d.stats);
+  g.buffs = { rapid: 0, barrage: 0, wind: 0 };   // buffs don't persist
+  g.sbuffs = { dmg: 0, speed: 0, rate: 0, shield: 0, gold: 0 };
+  g.mercs = [];
+  (d.islands || []).forEach((c, i) => {
+    if (c && g.islands[i] && g.islands[i].kind !== 'base') g.islands[i].captured = true;
+  });
+  for (const e of g.enemies) {
+    const isl = g.islands[e.homeIsl];
+    if (isl && isl.captured) e.dead = true;
+  }
+  g.enemies = g.enemies.filter(e => !e.dead);
+  for (const t of g.turrets) {
+    const isl = g.islands[t.islIdx];
+    if (isl && isl.captured) t.dead = true;
+  }
+  g.turrets = g.turrets.filter(t => !t.dead);
+  g.cam.x = p.x; g.cam.y = p.y;
+}
+
+/* ---------------- Enemies ---------------- */
+function enemyStatsForLevel(level) {
+  return {
+    hp: Math.round(60 * Math.pow(1.18, level - 1)),
+    damage: Math.max(1, Math.round(7 * Math.pow(1.10, level - 1))),
+    fireInterval: Math.max(0.85, 1.5 - 0.035 * level),
+  };
+}
+function enemyTypeForTier(tier, i) {
+  if (typeof v4_extraType === 'function') { const t = v4_extraType(tier, i); if (t) return t; } // v4 hook
+  if (tier >= 4 && i % 4 === 3) return 'brute';
+  if (tier >= 2 && i % 3 === 2) return 'skirm';
+  return 'sloop';
+}
+/* v4: ship-type definition registry. v4_ships.js extends via SHIP_TYPES_EXT. */
+const SHIP_DEFS = {
+  sloop: { hp: 1.0, dmg: 1.0, speed: 1.0, range: 300, size: 1.0, guns: 2 },
+  skirm:  { hp: 0.7, dmg: 0.8, speed: 1.4, range: 250, size: 0.8, guns: 1 },
+  brute:  { hp: 1.8, dmg: 1.4, speed: 0.7, range: 335, size: 1.5, guns: 3 },
+};
+function shipDef(type) {
+  if (typeof SHIP_TYPES_EXT !== 'undefined' && SHIP_TYPES_EXT[type]) return SHIP_TYPES_EXT[type];
+  return SHIP_DEFS[type] || SHIP_DEFS.sloop;
+}
+function applyEnemyType(st, type) {
+  const d = shipDef(type);
+  const s = { hp: Math.round(st.hp * d.hp), damage: Math.max(1, Math.round(st.damage * d.dmg)),
+    fireInterval: st.fireInterval * (d.rate || 1), speed: d.speed, range: d.range, size: d.size,
+    guns: d.guns || 2, type };
+  if (st.boss) s.size = Math.max(s.size, 1.6);
+  return s;
+}
+function dropsForEnemy(level, rng) {
+  rng = rng || Math.random;
+  let n = (1 + (rng() < 0.55 ? 1 : 0) + (level >= 5 && rng() < 0.45 ? 1 : 0) + (level >= 8 ? 2 : 0)) * DROP_MULT;
+  const mats = ['planks', 'cannons', 'powder', 'cloth'];
+  const wts = [0.32, 0.24, 0.24, 0.20];
+  const out = { planks: 0, cannons: 0, powder: 0, cloth: 0 };
+  for (let i = 0; i < n; i++) {
+    const r = rng(); let acc = 0;
+    for (let k = 0; k < 4; k++) { acc += wts[k]; if (r <= acc) { out[mats[k]]++; break; } }
+  }
+  return out;
+}
+function shouldLeash(dHome) { return dHome > LEASH_DIST; }
+
+/* ---------------- Land turrets (island defenders) ---------------- */
+const TURRETS = {
+  arrow:  { label: 'Arrow tower',  range: 210, interval: 0.7, dmg: 3,  projSpeed: 380, hp: 40, size: 1.0, desc: 'Short range, rapid arrows' },
+  pistol: { label: 'Pistol nest',  range: 300, interval: 1.5, dmg: 5,  projSpeed: 430, hp: 50, size: 1.0, desc: 'Medium range pot-shots' },
+  rifle:  { label: 'Rifle bunker', range: 430, interval: 2.4, dmg: 8,  projSpeed: 530, hp: 60, size: 1.1, desc: 'Long range, accurate' },
+  cannon: { label: 'Shore cannon', range: 390, interval: 3.4, dmg: 14, projSpeed: 300, hp: 80, size: 1.2, desc: 'Slow, heavy shells' },
+};
+function turretStats(weapon, tier) {
+  const t = TURRETS[weapon];
+  return {
+    label: t.label,
+    hp: t.hp + tier * 30,
+    damage: t.dmg + tier * 3,
+    range: t.range, interval: t.interval, projSpeed: t.projSpeed, size: t.size,
+  };
+}
+
+const DOCTRINES = [
+  { id: 'rapid',   name: 'Rapid Broadsides', desc: '+33% fire rate for 60s' },
+  { id: 'repair',  name: 'Damage Control',   desc: 'Restore +50 hull HP now' },
+  { id: 'barrage', name: 'Powder Barrage',   desc: '+30% cannon damage for 45s' },
+  { id: 'wind',    name: 'Trade Wind',       desc: '+20% sail speed for 60s' },
+];
+
+/* ---------------- Home base upgrades ---------------- */
+const BASE_UPG = {
+  drydock:   { label: 'Drydock',    max: 3, sub: 'ship upgrades finish faster' },
+  repair:    { label: 'Repair Bay',  max: 3, sub: '+4% hull heal/s at base' },
+  battery:   { label: 'Gun Battery', max: 3, sub: 'base cannons fire on nearby enemies' },
+  warehouse: { label: 'Warehouse',  max: 3, sub: '+60 material storage each' },
+};
+function baseUpgradeCost(id, lvl) {
+  const base = {
+    drydock:   { planks: 40 },
+    repair:    { planks: 30, cannons: 10 },
+    battery:   { cannons: 25, powder: 20 },
+    warehouse: { planks: 50 },
+  }[id];
+  if (!base) throw new Error('unknown base upgrade: ' + id);
+  const out = {};
+  for (const k in base) out[k] = Math.ceil(base[k] * Math.pow(1.8, lvl));
+  return out;
+}
+function drydockMult(g) { return 1 / Math.pow(1.5, g.bupg.drydock); }
+function matCap(g) { return 99 + 60 * g.bupg.warehouse; }
+/* docked: 1s base build time; at sea: 5x longer. Drydock shortens both. */
+function upgradeDuration(g) {
+  return (g.docked ? 1.0 : SEA_UPGRADE_MULT * 1.0) * drydockMult(g);
+}
+function baseHealPerSec(g) { return (0.08 + 0.04 * g.bupg.repair) * g.player.maxHp; }
+function batteryStats(g) {
+  const l = g.bupg.battery;
+  return l > 0 ? { range: 520 + 80 * l, dmg: 8 + 7 * l, interval: 1.3 } : null;
+}
+function regenPerSec(g) {
+  const p = g.player;
+  if (g.docked) return 0; // base healing (much faster) applies instead
+  const outOfCombat = (g.t - p.lastDmgT) > REGEN_DELAY;
+  return p.maxHp * (outOfCombat ? REGEN_OOC : REGEN_COMBAT);
+}
+
+/* ---------------- Bestiary (loot codex) ---------------- */
+const BESTIARY = [
+  { name: '🛶 Sloop',       desc: 'Balanced pirate ship. Patrols near islands.', drops: '1–2 materials (mostly 🪵 planks)' },
+  { name: '⛵ Skirmisher',  desc: 'Fast, fragile raider. Tier 2+ waters.',       drops: '1–2 materials (often 🧨 powder / ⛵ cloth)' },
+  { name: '🚢 Brute',       desc: 'Slow floating fortress. Tier 4+ waters.',     drops: '2–3 materials' },
+  { name: '🏴 Flagship',    desc: 'Rare terror (level 8+). Big, mean, rich.',    drops: '4–6 materials' },
+  { name: '🏹 Arrow tower', desc: 'Short range, rapid fire from shore.',         drops: '1 material' },
+  { name: '🔫 Pistol nest', desc: 'Medium-range pot-shots from shore.',          drops: '1 material' },
+  { name: '🎯 Rifle bunker',desc: 'Long range, accurate shore fire.',            drops: '1–2 materials' },
+  { name: '💥 Shore cannon',desc: 'Slow, heavy shells from fortified islands.', drops: '1–2 materials' },
+  { name: '🏝️ Island capture', desc: 'Clear ALL defenders, then hold the ring.', drops: 'Battle doctrine choice + 25–40 🪙 (first clear)' },
+  { name: '💰 Sea treasure', desc: 'Floating chest — shoot it open. Respawns every 90–120s.', drops: 'Materials (3× in test), 10–20 🪙, 30% cannon, 8% free upgrade' },
+  { name: '✨ Sea buffs', desc: 'Color-coded pickups: 🔴 +40% dmg, 🔵 +30% speed, 🟢 +50% fire rate, 🟣 −40% taken, 🟡 2× gold. Max 3 active.', drops: 'Temporary combat edge' },
+  { name: '⚔️ Hired pirates', desc: 'Buy at base/Shipyard or the ⚔️ button: 60s at ~half your power. Max 3.', drops: 'Fire support (they can be sunk!)' },
+  { name: '🎁 Free upgrades', desc: '~3% from any sink: a random upgrade applied instantly.', drops: 'Hull / powder / sails / hull tier' },
+];
+const MAT_LABEL = { planks: '🪵 planks', cannons: '💣 cannons', powder: '🧨 powder', cloth: '⛵ cloth' };
+
+/* ---------------- Game state ---------------- */
+function makeIslands() {
+  // difficulty radiates outward from the home base (SW corner)
+  const defs = [
+    { kind: 'base',     x: 500,  y: 3050, r: 170, tier: 0, turrets: [] },
+    { kind: 'atoll',    x: 1150, y: 2350, r: 120, tier: 1, turrets: ['arrow', 'arrow'] },
+    { kind: 'rocky',    x: 2000, y: 2650, r: 130, tier: 2, turrets: ['pistol', 'pistol'] },
+    { kind: 'volcanic', x: 2900, y: 2000, r: 150, tier: 3, turrets: ['rifle', 'rifle', 'cannon'] },
+    { kind: 'fort',     x: 2300, y: 900,  r: 140, tier: 4, turrets: ['cannon', 'cannon', 'rifle'] },
+    { kind: 'skull',    x: 800,  y: 450,  r: 160, tier: 5, turrets: ['cannon', 'cannon', 'rifle', 'pistol'] },
+  ];
+  return defs.map((d, idx) => ({ kind: d.kind, x: d.x, y: d.y, r: d.r, tier: d.tier,
+    turretKinds: d.turrets, captured: d.kind === 'base', prog: 0, idx }));
+}
+function defenderShipCount(tier) { return [0, 2, 2, 3, 3, 4][tier] || 2; }
+
+function spawnDefender(g, isl, i) {
+  const level = isl.tier;
+  let type = enemyTypeForTier(isl.tier, i);
+  let heavy = false;
+  if (typeof v4_rollHeavy === 'function' && v4_rollHeavy(isl.tier)) { type = 'manowar'; heavy = true; } // v4 hook
+  const st = enemyStatsForLevel(level);
+  const es = applyEnemyType(st, type);
+  const a = (i / Math.max(1, defenderShipCount(isl.tier))) * TAU + isl.idx * 1.3;
+  const r = isl.r + 150 + Math.random() * 120;
+  const x = clamp(isl.x + Math.cos(a) * r, 60, MAP - 60);
+  const y = clamp(isl.y + Math.sin(a) * r, 60, MAP - 60);
+  g.enemies.push({
+    x, y, hx: x, hy: y, homeIsl: isl.idx, vx: 0, vy: 0, angle: Math.random() * TAU,
+    hp: es.hp, maxHp: es.hp, level, type, heavy,
+    damage: es.damage, fireInterval: es.fireInterval, fireT: 1 + Math.random() * 1.5,
+    speed: 95 * es.speed, range: es.range, size: es.size,
+    state: 'patrol', wanderT: 0, wanderA: 0, ramT: 0, hitFlash: 0, boss: false, dead: false,
+  });
+}
+function spawnTurret(g, isl, i) {
+  const weapon = isl.turretKinds[i];
+  const st = turretStats(weapon, isl.tier);
+  const a = (i / isl.turretKinds.length) * TAU + isl.idx * 0.7 + 0.4;
+  g.turrets.push({
+    x: isl.x + Math.cos(a) * isl.r * 0.78, y: isl.y + Math.sin(a) * isl.r * 0.78,
+    islIdx: isl.idx, weapon, angle: a,
+    hp: st.hp, maxHp: st.hp, damage: st.damage, range: st.range,
+    interval: st.interval, projSpeed: st.projSpeed, size: st.size,
+    fireT: 1 + Math.random() * 2, hitFlash: 0, dead: false,
+  });
+}
+function spawnPatrol(g) {
+  if (g.enemies.length >= MAX_ENEMIES) return;
+  const cands = g.islands.filter(i => i.kind !== 'base');
+  const wild = cands.filter(i => !i.captured);
+  const pool = wild.length ? wild : cands;
+  const isl = pool[Math.floor(Math.random() * pool.length)];
+  const n = 1 + (Math.random() < 0.4 ? 1 : 0);
+  for (let k = 0; k < n && g.enemies.length < MAX_ENEMIES; k++) {
+    const level = isl.tier + Math.min(6, Math.floor(g.t / 150));
+    const type = enemyTypeForTier(isl.tier, k);
+    const st = enemyStatsForLevel(level);
+    const boss = level >= 8;
+    const es = applyEnemyType({ hp: st.hp, damage: st.damage, fireInterval: st.fireInterval, boss }, type);
+    const a = Math.random() * TAU, r = isl.r + 200 + Math.random() * 150;
+    const x = clamp(isl.x + Math.cos(a) * r, 60, MAP - 60);
+    const y = clamp(isl.y + Math.sin(a) * r, 60, MAP - 60);
+    g.enemies.push({
+      x, y, hx: x, hy: y, homeIsl: isl.idx, vx: 0, vy: 0, angle: Math.random() * TAU,
+      hp: es.hp, maxHp: es.hp, level, type,
+      damage: es.damage, fireInterval: es.fireInterval, fireT: 1 + Math.random(),
+      speed: 95 * es.speed, range: es.range, size: es.size,
+      state: 'patrol', wanderT: 0, wanderA: 0, ramT: 0, hitFlash: 0, boss, dead: false,
+    });
+  }
+}
+function islandThreat(g, isl) {
+  let n = 0;
+  for (const e of g.enemies) if (!e.dead && e.homeIsl === isl.idx) n++;
+  for (const t of g.turrets) if (!t.dead && t.islIdx === isl.idx) n++;
+  return n;
+}
+
+function createGame() {
+  const base = { x: 500, y: 3050 };
+  const g = {
+    t: 0, state: 'menu',
+    sunk: 0, islandsCaptured: 0, score: 0,
+    player: null, enemies: [], turrets: [], huts: [], balls: [], pickups: [], parts: [], toasts: [],
+    islands: makeIslands(),
+    inv: { planks: 0, cannons: 0, powder: 0, cloth: 0 },
+    upg: { hull: 0, powder: 0, cloth: 0 },
+    bupg: { drydock: 0, repair: 0, battery: 0, warehouse: 0 },
+    upgQueue: [],
+    gold: 0, crew: 4, tier: 0, spares: [],
+    mercs: [], sbuffs: { dmg: 0, speed: 0, rate: 0, shield: 0, gold: 0 },
+    hireHist: [], hireCd: 0,
+    treasure: null, treasureT: 45, sbuffT: 12,
+    saveT: 0, playtime: 0,
+    docked: false, base: null,
+    buffs: { rapid: 0, barrage: 0, wind: 0 },
+    doctrineChoices: [],
+    respawnT: RESPAWN_TIME,
+    batteryT: 0,
+    input: { keys: {}, joy: { active: false, sx: 0, sy: 0, dx: 0, dy: 0 }, mouse: { wx: 0, wy: 0, in: false } },
+    cam: { x: base.x, y: base.y },
+    shake: 0, hudT: 0,
+    stats: { shotsFired: 0, hits: 0 },
+  };
+  g.base = g.islands[0];
+  resetPlayer(g);
+  for (const isl of g.islands) {
+    if (isl.kind === 'base') continue;
+    for (let i = 0; i < defenderShipCount(isl.tier); i++) spawnDefender(g, isl, i);
+    for (let i = 0; i < isl.turretKinds.length; i++) spawnTurret(g, isl, i);
+    spawnHuts(g, isl); // v4: destructible huts
+  }
+  return g;
+}
+function resetPlayer(g) {
+  const b = g.base || { x: 500, y: 3050 };
+  g.player = {
+    x: b.x, y: b.y + 200, vx: 0, vy: 0, angle: -Math.PI / 2,
+    hp: 100, maxHp: 100, baseDmg: 10,
+    cannons: [makeCannon('standard'), makeCannon('standard')],
+    fireT: 0, alive: true, hitFlash: 0, ramT: 0, lastDmgT: -99,
+  };
+  g.docked = true;
+}
+function playerDamage(g) {
+  // per-cannon base; quality mult applied per cannon at fire time. Total bonus capped at +50%.
+  return Math.round(g.player.baseDmg * powderMult(g) * (1 + seaDmgBonus(g)));
+}
+function playerSpeed(g) {
+  let s = 150 * speedMultForCloth(g.upg.cloth);
+  if (g.buffs.wind > 0) s *= 1.2;
+  if (g.sbuffs.speed > 0) s *= 1.3;
+  return s;
+}
+function playerReload(g) {
+  let r = g.buffs.rapid > 0 ? 0.78 : 1.1;
+  if (g.sbuffs.rate > 0) r *= 0.67;
+  return r * crewReloadMult(g.crew);
+}
+function playerTurnRate(g) { return tierOf(g).turnDeg * Math.PI / 180; }
+function nearestEnemy(g, x, y, maxD) {
+  let best = null, bd = maxD * maxD;
+  for (const e of g.enemies) {
+    if (e.dead) continue;
+    const dx = e.x - x, dy = e.y - y, d2 = dx * dx + dy * dy;
+    if (d2 < bd) { bd = d2; best = e; }
+  }
+  return best;
+}
+function collideIslands(g, o, r) {
+  for (const isl of g.islands) {
+    const dx = o.x - isl.x, dy = o.y - isl.y;
+    const d = Math.hypot(dx, dy), min = isl.r + r;
+    if (d < min) {
+      const a = d > 0.01 ? Math.atan2(dy, dx) : 0;
+      o.x = isl.x + Math.cos(a) * min;
+      o.y = isl.y + Math.sin(a) * min;
+      const vn = o.vx * Math.cos(a) + o.vy * Math.sin(a);
+      if (vn < 0) { o.vx -= vn * Math.cos(a); o.vy -= vn * Math.sin(a); }
+    }
+  }
+}
+function canAfford(g, type) {
+  if (type === 'tier') {
+    if (g.tier >= TIERS.length - 1) return false;
+    const c = TIER_COST[g.tier + 1];
+    return g.inv.planks >= c.planks && g.gold >= c.gold;
+  }
+  const lvl = g.upg[type];
+  if (lvl >= UPG[type].max) return false;
+  const c = upgradeCost(type, lvl);
+  for (const k in c) if ((g.inv[k] || 0) < c[k]) return false;
+  return true;
+}
+/* Queue a ship upgrade: docked = ~1s, at sea = 5x longer. Cost taken up front. */
+function startUpgrade(g, type) {
+  if (g.upgQueue.length >= 3) return false;
+  if (!canAfford(g, type)) return false;
+  const c = type === 'tier' ? TIER_COST[g.tier + 1] : upgradeCost(type, g.upg[type]);
+  for (const k in c) { if (k === 'gold') g.gold -= c[k]; else g.inv[k] -= c[k]; }
+  const dur = upgradeDuration(g);
+  g.upgQueue.push({ type, t: dur, total: dur });
+  sfx('queue');
+  return true;
+}
+function applyUpgrade(g, type) {
+  if (type === 'tier') {
+    g.tier++;
+    const p = g.player;
+    if (p.cannons.length < tierOf(g).ports) p.cannons.push(makeCannon('standard'));
+    addToast(g, p.x, p.y - 50, '🚢 Now sailing a ' + tierOf(g).name + '!');
+    sfx('buy');
+    return;
+  }
+  g.upg[type]++;
+  if (type === 'hull') { g.player.maxHp += 20; g.player.hp = Math.min(g.player.maxHp, g.player.hp + 20); }
+  sfx('buy');
+}
+function baseGoldCost(lvl) { return 25 * (lvl + 1); }
+function canAffordBase(g, id) {
+  if (!g.docked) return false; // base upgrades only at the base
+  const lvl = g.bupg[id];
+  if (lvl >= BASE_UPG[id].max) return false;
+  const c = baseUpgradeCost(id, lvl);
+  for (const k in c) if ((g.inv[k] || 0) < c[k]) return false;
+  return g.gold >= baseGoldCost(lvl);
+}
+function tryBuyBaseUpgrade(g, id) {
+  if (!canAffordBase(g, id)) return false;
+  const c = baseUpgradeCost(id, g.bupg[id]);
+  for (const k in c) g.inv[k] -= c[k];
+  g.gold -= baseGoldCost(g.bupg[id]);
+  g.bupg[id]++;
+  sfx('buy');
+  return true;
+}
+/* v3: crew hire (base only), cannon mount/strip/repair */
+function hireCrew(g) {
+  if (!g.docked || g.crew >= CREW_MAX) return false;
+  const c = crewHireCost(g.crew);
+  if (g.gold < c) return false;
+  g.gold -= c; g.crew++;
+  sfx('hire');
+  return true;
+}
+function mountCannon(g, i) {
+  const p = g.player;
+  if (i < 0 || i >= g.spares.length) return false;
+  if (p.cannons.length >= tierOf(g).ports) return false;
+  p.cannons.push(g.spares.splice(i, 1)[0]);
+  sfx('buy');
+  return true;
+}
+function stripCannon(g, i) {
+  if (i < 0 || i >= g.spares.length) return false;
+  g.spares.splice(i, 1);
+  const cap = matCap(g);
+  g.inv.planks = Math.min(cap, g.inv.planks + 4);
+  g.inv.powder = Math.min(cap, g.inv.powder + 2);
+  addToast(g, g.player.x, g.player.y - 50, '+4 🪵 +2 🧨 (stripped for parts)');
+  sfx('pickup');
+  return true;
+}
+function repairCannons(g) {
+  if (!g.docked) return false;
+  let cost = 0;
+  for (const c of g.player.cannons) cost += Math.ceil((100 - c.cond) * 0.15);
+  if (cost <= 0 || g.gold < cost) return false;
+  g.gold -= cost;
+  for (const c of g.player.cannons) c.cond = 100;
+  sfx('buy');
+  return true;
+}
+
+/* ---------------- Combat & events ---------------- */
+function addToast(g, x, y, text) {
+  if (g.toasts.length > 24) g.toasts.shift();
+  g.toasts.push({ x, y, text, life: 1.4, maxLife: 1.4 });
+}
+function damagePlayer(g, dmg) {
+  const p = g.player;
+  if (!p.alive) return;
+  if (g.sbuffs.shield > 0) dmg = Math.round(dmg * 0.6);
+  // heavy hits can kill crew
+  if (dmg > p.maxHp * 0.15 && g.crew > 0 && Math.random() < 0.5) {
+    g.crew--;
+    addToast(g, p.x, p.y - 56, '💀 Crew lost! (' + g.crew + ' left)');
+  }
+  p.hp -= dmg; p.hitFlash = 0.25; p.lastDmgT = g.t;
+  g.shake = Math.min(7, g.shake + 2.5);
+  sfx('phit');
+  if (p.hp <= 0) { p.hp = 0; p.alive = false; explode(g, p.x, p.y, 26); gameOver(g); }
+}
+function sinkEnemy(g, e) {
+  if (e.dead) return;
+  e.dead = true;
+  g.sunk++;
+  g.score = g.sunk + g.islandsCaptured * 25;
+  explode(g, e.x, e.y, 20 * e.size);
+  // v4: heavies/bosses open the boarding loot popup instead of scattering pickups
+  if (typeof v4_wantsBoarding === 'function' && v4_wantsBoarding(e)) { v4_onSinkBoarding(g, e); sfx('sink'); return; }
+  dropLoot(g, e.x, e.y, dropsForEnemy(e.level));
+  // gold (2x while the gold sea-buff is active)
+  const gg = goldForKill(e.level, e.boss ? 'boss' : e.type) * (g.sbuffs.gold > 0 ? 2 : 1);
+  pushPickup(g, e.x, e.y, 'gold', { amount: gg });
+  // cannon item drops
+  const cq = e.boss ? 0.4 : e.type === 'brute' ? 0.2 : 0.1;
+  if (Math.random() < cq) pushPickup(g, e.x, e.y, 'citem', { q: rollCannonQuality() });
+  // small chance of a free upgrade
+  if (Math.random() < FREE_UPG_CHANCE) grantRandomUpgrade(g);
+  sfx('sink');
+}
+function sinkTurret(g, t) {
+  if (t.dead) return;
+  t.dead = true;
+  g.sunk++;
+  g.score = g.sunk + g.islandsCaptured * 25;
+  explode(g, t.x, t.y, 16 * t.size);
+  dropLoot(g, t.x, t.y, { planks: 0, cannons: 0, powder: 0, cloth: 0, bonus: 1 });
+  pushPickup(g, t.x, t.y, 'gold', { amount: 1 + Math.floor(Math.random() * 2) });
+  if (Math.random() < FREE_UPG_CHANCE) grantRandomUpgrade(g);
+  sfx('sink');
+}
+function dropLoot(g, x, y, drops) {
+  for (const m in drops) {
+    if (m === 'bonus') continue;
+    for (let i = 0; i < drops[m]; i++) pushPickup(g, x, y, m);
+  }
+  if (drops.bonus) for (let i = 0; i < drops.bonus; i++) {
+    const mats = ['planks', 'cannons', 'powder', 'cloth'];
+    pushPickup(g, x, y, mats[Math.floor(Math.random() * 4)]);
+  }
+}
+function pushPickup(g, x, y, type, extra) {
+  const a = Math.random() * TAU, r = 12 + Math.random() * 34;
+  const pk = { x: x + Math.cos(a) * r, y: y + Math.sin(a) * r,
+    type, bob: Math.random() * TAU, dead: false };
+  if (type === 'gold') { pk.amount = (extra && extra.amount) || 1; pk.label = '🪙 gold'; }
+  else if (type === 'citem') { pk.q = (extra && extra.q) || 'standard'; pk.label = CANNON_Q[pk.q].glyph + ' ' + CANNON_Q[pk.q].label + ' cannon'; }
+  else if (type === 'sbuff') { pk.b = (extra && extra.b) || 'dmg'; pk.label = SBUFFS[pk.b].glyph + ' ' + SBUFFS[pk.b].label; }
+  else pk.label = MAT_LABEL[type];
+  g.pickups.push(pk);
+}
+function offerDoctrine(g) {
+  const pool = DOCTRINES.slice();
+  g.doctrineChoices = [];
+  for (let i = 0; i < 2; i++) g.doctrineChoices.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+  g.state = 'doctrine';
+  sfx('capture');
+  showDoctrinePanel(g);
+}
+function chooseDoctrine(g, idx) {
+  const d = g.doctrineChoices[idx];
+  if (!d) return;
+  if (d.id === 'rapid') g.buffs.rapid = 60;
+  if (d.id === 'barrage') g.buffs.barrage = 45;
+  if (d.id === 'wind') g.buffs.wind = 60;
+  if (d.id === 'repair') g.player.hp = Math.min(g.player.maxHp, g.player.hp + 50);
+  g.state = 'playing';
+  hideDoctrinePanel();
+}
+
+/* ---------------- v3: treasure, sea buffs, mercenaries ---------------- */
+function spawnTreasure(g) {
+  for (let tries = 0; tries < 10; tries++) {
+    const x = 200 + Math.random() * (MAP - 400), y = 200 + Math.random() * (MAP - 400);
+    let okp = true;
+    for (const isl of g.islands) if (dist(x, y, isl.x, isl.y) < isl.r + 80) { okp = false; break; }
+    if (!okp) continue;
+    g.treasure = { x, y, hp: 30, maxHp: 30, bob: 0 };
+    addToast(g, x, y - 40, '💰 Treasure spotted! Shoot it open.');
+    return;
+  }
+}
+function updateTreasure(g, dt) {
+  g.treasureT -= dt;
+  if (!g.treasure && g.treasureT <= 0) { spawnTreasure(g); g.treasureT = treasureCooldown(); }
+  if (g.treasure) g.treasure.bob += dt * 3;
+}
+function breakTreasure(g) {
+  const t = g.treasure;
+  if (!t) return;
+  g.treasure = null;
+  explode(g, t.x, t.y, 24);
+  sfx('treasure');
+  dropLoot(g, t.x, t.y, dropsForEnemy(6));
+  pushPickup(g, t.x, t.y, 'gold', { amount: 10 + Math.floor(Math.random() * 11) });
+  if (Math.random() < 0.3) pushPickup(g, t.x, t.y, 'citem', { q: rollCannonQuality() });
+  if (Math.random() < 0.08) grantRandomUpgrade(g);
+  addToast(g, t.x, t.y - 50, '💰 Treasure cracked open!');
+}
+function spawnSeaBuff(g) {
+  const keys = Object.keys(SBUFFS);
+  const b = keys[Math.floor(Math.random() * keys.length)];
+  for (let tries = 0; tries < 8; tries++) {
+    const x = 150 + Math.random() * (MAP - 300), y = 150 + Math.random() * (MAP - 300);
+    let okp = true;
+    for (const isl of g.islands) if (dist(x, y, isl.x, isl.y) < isl.r + 60) { okp = false; break; }
+    if (okp) { pushPickup(g, x, y, 'sbuff', { b }); return; }
+  }
+}
+function updateSeaBuffs(g, dt) {
+  for (const k in g.sbuffs) if (g.sbuffs[k] > 0) g.sbuffs[k] = Math.max(0, g.sbuffs[k] - dt);
+  g.sbuffT -= dt;
+  if (g.sbuffT <= 0) {
+    g.sbuffT = 22;
+    let n = 0;
+    for (const k of g.pickups) if (k.type === 'sbuff') n++;
+    if (n < 3) spawnSeaBuff(g);
+  }
+}
+function updateMercs(g, dt) {
+  const p = g.player;
+  if (g.hireCd > 0) g.hireCd -= dt;
+  for (const m of g.mercs) {
+    if (m.dead) continue;
+    m.t -= dt;
+    if (m.hitFlash > 0) m.hitFlash -= dt;
+    if (m.t <= 0) { m.dead = true; addToast(g, m.x, m.y - 40, '⚔️ Pirate contract ended'); continue; }
+    // follow: hold station off the player's port quarter
+    const fx = p.x - Math.cos(p.angle) * 90 - Math.cos(p.angle + Math.PI / 2) * 70;
+    const fy = p.y - Math.sin(p.angle) * 90 - Math.sin(p.angle + Math.PI / 2) * 70;
+    const d = dist(m.x, m.y, fx, fy);
+    const want = Math.atan2(fy - m.y, fx - m.x);
+    m.angle += clamp(angDiff(m.angle, want), -2.4 * dt, 2.4 * dt);
+    const thrust = d > 40 ? 1 : 0.2;
+    m.vx += Math.cos(m.angle) * 260 * thrust * dt;
+    m.vy += Math.sin(m.angle) * 260 * thrust * dt;
+    const damp = Math.exp(-1.8 * dt);
+    m.vx *= damp; m.vy *= damp;
+    const v = Math.hypot(m.vx, m.vy), vmax = playerSpeed(g) * 1.25;
+    if (v > vmax && v > 0.01) { m.vx *= vmax / v; m.vy *= vmax / v; }
+    m.x += m.vx * dt; m.y += m.vy * dt;
+    collideIslands(g, m, 20);
+    m.x = clamp(m.x, 30, MAP - 30); m.y = clamp(m.y, 30, MAP - 30);
+    // fire at the player's target (or nearest threat) — half the player's power
+    m.fireT -= dt;
+    if (m.fireT <= 0) {
+      const tgt = nearestThreat(g, p.x, p.y, 300) || nearestThreat(g, m.x, m.y, 280);
+      if (tgt) {
+        const a = Math.atan2(tgt.y - m.y, tgt.x - m.x) + (Math.random() - 0.5) * 0.12;
+        const dmg = Math.round(playerDamage(g) * 0.5);
+        for (let i = 0; i < m.guns; i++) {
+          g.balls.push({ x: m.x, y: m.y, vx: Math.cos(a) * 460, vy: Math.sin(a) * 460,
+            life: 1.1, dmg, fromPlayer: true, kind: 'cannon', r: 4, dead: false });
+        }
+        m.fireT = playerReload(g) * 1.2;
+        muzzle(g, m.x, m.y, a);
+      } else m.fireT = 0.2;
+    }
+  }
+  g.mercs = g.mercs.filter(m => !m.dead);
+}
+
+/* ---------------- Particles ---------------- */
+function addPart(g, x, y, vx, vy, life, color, size) {
+  if (g.parts.length > 220) g.parts.shift();
+  g.parts.push({ x, y, vx, vy, life, maxLife: life, color, size });
+}
+function explode(g, x, y, s) {
+  addParticle(g, {
+    x,
+    y,
+    vx: 0,
+    vy: 0,
+    life: 0.35,
+    maxLife: 0.35,
+    color: '#C0392B',
+    size: 10 + s * 0.35,
+    kind: 'starburst'
+  });
+
+  for (let i = 0; i < 6; i++) {
+    const angle = (i / 6) * TAU + Math.random() * 0.4;
+    const spd = 35 + Math.random() * 45;
+    addParticle(g, {
+      x,
+      y,
+      vx: Math.cos(angle) * spd,
+      vy: Math.sin(angle) * spd,
+      life: 0.35 + Math.random() * 0.2,
+      maxLife: 0.55,
+      color: '#3B2A20',
+      size: 2 + Math.random() * 1.5,
+      kind: 'inkdot'
+    });
+  }
+
+  addParticle(g, {
+    x,
+    y,
+    vx: (Math.random() - 0.5) * 6,
+    vy: -8 - Math.random() * 6,
+    life: 1.6,
+    maxLife: 1.6,
+    color: '#F2E4C9',
+    size: 13 + s * 0.3,
+    kind: 'ghost'
+  });
+
+  for (let i = 0; i < 3; i++) {
+    const angle = Math.random() * TAU;
+    const spd = 12 + Math.random() * 18;
+    addParticle(g, {
+      x: x + (Math.random() - 0.5) * 6,
+      y: y + (Math.random() - 0.5) * 6,
+      vx: Math.cos(angle) * spd,
+      vy: Math.sin(angle) * spd - 6,
+      life: 0.5 + Math.random() * 0.3,
+      maxLife: 0.8,
+      color: '#8a8578',
+      size: 4 + Math.random() * 4,
+      kind: 'puff'
+    });
+  }
+}
+
+function splash(g, x, y) {
+  for (let i = 0; i < 5; i++) {
+    const angle = (i / 5) * TAU + (Math.random() - 0.5) * 0.3;
+    const spd = 20 + Math.random() * 30;
+    addParticle(g, {
+      x,
+      y,
+      vx: Math.cos(angle) * spd,
+      vy: Math.sin(angle) * spd,
+      life: 0.3 + Math.random() * 0.2,
+      maxLife: 0.5,
+      color: '#3FA0A8',
+      size: 2.5 + Math.random() * 1.5,
+      kind: 'inktick'
+    });
+  }
+}
+
+function muzzle(g, x, y, a) {
+  addParticle(g, {
+    x,
+    y,
+    vx: Math.cos(a) * 8,
+    vy: Math.sin(a) * 8,
+    life: 0.12,
+    maxLife: 0.12,
+    color: '#D9A441',
+    size: 12,
+    kind: 'brassflash'
+  });
+
+  for (let i = 0; i < 2; i++) {
+    const spread = (Math.random() - 0.5) * 0.25;
+    const spd = 50 + Math.random() * 35;
+    addParticle(g, {
+      x,
+      y,
+      vx: Math.cos(a + spread) * spd,
+      vy: Math.sin(a + spread) * spd,
+      life: 0.2 + Math.random() * 0.15,
+      maxLife: 0.35,
+      color: '#3B2A20',
+      size: 1.8 + Math.random() * 1.2,
+      kind: 'inkdot'
+    });
+  }
+}
+
+function smoke(g, x, y, a) {
+  for (let i = 0; i < 3; i++) {
+    const spread = (Math.random() - 0.5) * 0.5;
+    const dir = a !== undefined ? a + Math.PI + spread : Math.random() * TAU;
+    const spd = 10 + Math.random() * 15;
+    addParticle(g, {
+      x,
+      y,
+      vx: Math.cos(dir) * spd,
+      vy: Math.sin(dir) * spd - 4,
+      life: 0.45 + Math.random() * 0.3,
+      maxLife: 0.75,
+      color: '#8a8578',
+      size: 4 + Math.random() * 3,
+      kind: 'puff'
+    });
+  }
+}
+
+function wake(g, x, y) {
+  for (let i = 0; i < 2; i++) {
+    const side = i === 0 ? -1 : 1;
+    addParticle(g, {
+      x,
+      y,
+      vx: side * (12 + Math.random() * 8),
+      vy: (Math.random() - 0.5) * 6,
+      life: 0.5 + Math.random() * 0.3,
+      maxLife: 0.8,
+      color: '#3B2A20',
+      size: 3 + Math.random() * 2.5,
+      kind: 'wakeline'
+    });
+  }
+}
+EXIT:0
+
+function updateParticles(g, dt) {
+  for (const pt of g.parts) {
+    pt.x += pt.vx * dt; pt.y += pt.vy * dt; pt.life -= dt;
+    if (pt.kind === 'droplet') pt.vy += 180 * dt;
+    if (pt.kind === 'smoke') pt.size += 2.5 * dt;
+    pt.vx *= Math.exp(-2 * dt); pt.vy *= Math.exp(-2 * dt);
+  }
+  g.parts = g.parts.filter(pt => pt.life > 0);
+}
+
+/* ---------------- Update ---------------- */
+function updateWorld(g, dt) {
+  g.t += dt;
+  for (const k of ['rapid', 'barrage', 'wind']) if (g.buffs[k] > 0) g.buffs[k] = Math.max(0, g.buffs[k] - dt);
+  if (g.player.hitFlash > 0) g.player.hitFlash -= dt;
+
+  // docking check
+  g.docked = g.player.alive && dist(g.player.x, g.player.y, g.base.x, g.base.y) < g.base.r + DOCK_PAD;
+
+  // roaming patrol spawns keep the seas alive
+  g.respawnT -= dt;
+  if (g.respawnT <= 0) { spawnPatrol(g); g.respawnT = RESPAWN_TIME; }
+
+  updatePlayer(g, dt);
+  updateMarines(g, dt); // v4: crew pistol fire
+  for (const h of g.huts) if (h.hitFlash > 0) h.hitFlash -= dt; // v4
+  updateEnemies(g, dt);
+  updateTurrets(g, dt);
+  updateBase(g, dt);
+  updateMercs(g, dt);
+  updateSeaBuffs(g, dt);
+  updateTreasure(g, dt);
+  updateBalls(g, dt);
+  updatePickups(g, dt);
+  updateToasts(g, dt);
+  updateRegen(g, dt);
+  updateUpgradeQueue(g, dt);
+  updateCapture(g, dt);
+  updateParticles(g, dt);
+
+  // cannon condition: jam timers tick down; crew repairs the worst cannon out of combat
+  for (const cn of g.player.cannons) if (cn.jamT > 0) cn.jamT -= dt;
+  if (g.player.alive && (g.t - g.player.lastDmgT) > REGEN_DELAY && g.crew > 0) {
+    let worst = null;
+    for (const cn of g.player.cannons) if (!worst || cn.cond < worst.cond) worst = cn;
+    if (worst && worst.cond < 100) worst.cond = Math.min(100, worst.cond + g.crew * 0.6 * dt);
+  }
+  // autosave + playtime
+  g.playtime += dt;
+  g.saveT += dt;
+  if (g.saveT >= AUTOSAVE_SECS) { g.saveT = 0; if (g.state === 'playing') saveGame(g); }
+
+  g.cam.x += (g.player.x - g.cam.x) * (1 - Math.exp(-5 * dt));
+  g.cam.y += (g.player.y - g.cam.y) * (1 - Math.exp(-5 * dt));
+  if (g.shake > 0) g.shake = Math.max(0, g.shake - dt * 4);
+}
+
+function updatePlayer(g, dt) {
+  const p = g.player;
+  if (!p.alive) return;
+  const inp = g.input, k = inp.keys;
+  let thrust = 0, steerTo = null;
+  const turn = playerTurnRate(g);
+
+  if (k['KeyW'] || k['ArrowUp']) thrust = 1;
+  if (k['KeyS'] || k['ArrowDown']) thrust = -0.45;
+  if (k['KeyA'] || k['ArrowLeft']) p.angle -= turn * dt;
+  if (k['KeyD'] || k['ArrowRight']) p.angle += turn * dt;
+
+  if (inp.joy.active) {
+    const m = Math.hypot(inp.joy.dx, inp.joy.dy);
+    if (m > 14) { steerTo = Math.atan2(inp.joy.dy, inp.joy.dx); thrust = clamp(m / 95, 0, 1); }
+  } else if (inp.mouse.in && !k['KeyW'] && !k['ArrowUp'] && !k['KeyS'] && !k['ArrowDown']) {
+    const d = dist(p.x, p.y, inp.mouse.wx, inp.mouse.wy);
+    if (d > 48) { steerTo = Math.atan2(inp.mouse.wy - p.y, inp.mouse.wx - p.x); thrust = clamp((d - 48) / 230, 0, 1); }
+  }
+  if (steerTo !== null) p.angle += clamp(angDiff(p.angle, steerTo), -turn * dt, turn * dt);
+
+  const sp = playerSpeed(g);
+  p.vx += Math.cos(p.angle) * 300 * thrust * dt;
+  p.vy += Math.sin(p.angle) * 300 * thrust * dt;
+  const damp = Math.exp(-1.6 * dt);
+  p.vx *= damp; p.vy *= damp;
+  const v = Math.hypot(p.vx, p.vy), vmax = sp * (thrust < 0 ? 0.55 : 1.18);
+  if (v > vmax && v > 0.01) { p.vx *= vmax / v; p.vy *= vmax / v; }
+  p.x += p.vx * dt; p.y += p.vy * dt;
+  collideIslands(g, p, tierOf(g).rad);
+  p.x = clamp(p.x, 30, MAP - 30); p.y = clamp(p.y, 30, MAP - 30);
+
+  // foam wake when moving fast
+  if (Math.hypot(p.vx, p.vy) > 60 && Math.random() < 0.5)
+    wake(g, p.x - Math.cos(p.angle) * 30, p.y - Math.sin(p.angle) * 30);
+
+  // auto-fire: each mounted cannon fires on its own quality/range/condition
+  p.fireT -= dt;
+  if (p.fireT <= 0) {
+    const maxR = Math.max.apply(null, p.cannons.map(c => CANNON_RANGE * cannonRngMult(c)).concat([0]));
+    const tgt = nearestThreat(g, p.x, p.y, maxR);
+    if (tgt) {
+      const baseA = Math.atan2(tgt.y - p.y, tgt.x - p.x);
+      const td = dist(p.x, p.y, tgt.x, tgt.y);
+      let fired = 0;
+      for (const cn of p.cannons) {
+        if (cn.jamT > 0) continue;
+        if (cn.cond < CANNON_JAM_HP && Math.random() < 0.35) { cn.jamT = 2; continue; }
+        if (td > CANNON_RANGE * cannonRngMult(cn)) continue;
+        const a = baseA + (Math.random() - 0.5) * 0.09;
+        const dmg = Math.round(playerDamage(g) * cannonDmgMult(cn));
+        const off = (fired - (p.cannons.length - 1) / 2) * 11;
+        g.balls.push({
+          x: p.x + Math.cos(baseA + Math.PI / 2) * off, y: p.y + Math.sin(baseA + Math.PI / 2) * off,
+          vx: Math.cos(a) * 470 + p.vx * 0.25, vy: Math.sin(a) * 470 + p.vy * 0.25,
+          life: 1.1, dmg, fromPlayer: true, kind: 'cannon', r: 4, dead: false,
+        });
+        cn.cond = Math.max(0, cn.cond - CANNON_WEAR);
+        fired++;
+      }
+      if (fired > 0) {
+        p.fireT = playerReload(g); g.stats.shotsFired += fired;
+        muzzle(g, p.x, p.y, baseA); smoke(g, p.x, p.y, baseA); sfx('cannon');
+      } else p.fireT = 0.12;
+    } else p.fireT = 0.12;
+  }
+  if (p.ramT > 0) p.ramT -= dt;
+}
+function nearestThreat(g, x, y, maxD) {
+  let best = nearestEnemy(g, x, y, maxD), bd = best ? dist(x, y, best.x, best.y) : maxD;
+  for (const t of g.turrets) {
+    if (t.dead) continue;
+    const d = dist(x, y, t.x, t.y);
+    if (d < bd) { bd = d; best = t; }
+  }
+  return best;
+}
+
+function updateEnemies(g, dt) {
+  const p = g.player;
+  for (const e of g.enemies) {
+    if (e.dead) continue;
+    if (e.hitFlash > 0) e.hitFlash -= dt;
+    const dP = dist(e.x, e.y, p.x, p.y);
+    const dH = dist(e.x, e.y, e.hx, e.hy);
+    if (shouldLeash(dH) && e.state !== 'return') e.state = 'return';
+    let want = e.angle, thrust = 0;
+    if (e.state === 'patrol') {
+      e.wanderT -= dt;
+      if (e.wanderT <= 0) {
+        e.wanderT = 2 + Math.random() * 2.5;
+        const ha = Math.atan2(e.hy - e.y, e.hx - e.x);
+        e.wanderA = dH > 320 ? ha + (Math.random() - 0.5) * 1.2 : Math.random() * TAU;
+      }
+      want = e.wanderA; thrust = 0.25;
+      if (p.alive && dP < AGGRO_DIST) e.state = 'chase';
+    } else if (e.state === 'chase') {
+      if (!p.alive) { e.state = 'patrol'; }
+      else {
+        want = Math.atan2(p.y - e.y, p.x - e.x);
+        thrust = dP > e.range * 0.75 ? 1 : 0.3;
+        e.fireT -= dt;
+        if (dP < e.range && e.fireT <= 0) {
+          const a = Math.atan2(p.y - e.y, p.x - e.x) + (Math.random() - 0.5) * 0.13;
+          g.balls.push({ x: e.x, y: e.y, vx: Math.cos(a) * 400, vy: Math.sin(a) * 400,
+            life: 1.25, dmg: e.damage, fromPlayer: false, kind: 'cannon', r: 4, dead: false });
+          e.fireT = e.fireInterval;
+          if (dP < 500) sfx('ecannon');
+        }
+        // v4: pistol-armed crew — direct damage at close range, no splash
+        e.pistolT = (e.pistolT === undefined ? 0.8 + Math.random() : e.pistolT) - dt;
+        if (dP < 200 && e.pistolT <= 0) {
+          const pa = Math.atan2(p.y - e.y, p.x - e.x) + (Math.random() - 0.5) * 0.2;
+          g.balls.push({ x: e.x, y: e.y, vx: Math.cos(pa) * 520, vy: Math.sin(pa) * 520,
+            life: 0.7, dmg: Math.max(1, Math.round(e.damage * 0.5)), fromPlayer: false, kind: 'pistol', r: 3, dead: false });
+          e.pistolT = 1.6;
+        }
+      }
+    } else { // return home
+      want = Math.atan2(e.hy - e.y, e.hx - e.x);
+      thrust = 0.85;
+      e.hp = Math.min(e.maxHp, e.hp + 6 * dt);
+      if (dH < 70) e.state = 'patrol';
+    }
+    e.angle += clamp(angDiff(e.angle, want), -2.2 * dt, 2.2 * dt);
+    e.vx += Math.cos(e.angle) * 230 * thrust * dt;
+    e.vy += Math.sin(e.angle) * 230 * thrust * dt;
+    const damp = Math.exp(-1.8 * dt);
+    e.vx *= damp; e.vy *= damp;
+    const v = Math.hypot(e.vx, e.vy);
+    if (v > e.speed && v > 0.01) { e.vx *= e.speed / v; e.vy *= e.speed / v; }
+    e.x += e.vx * dt; e.y += e.vy * dt;
+    collideIslands(g, e, 20 * e.size);
+    e.x = clamp(e.x, 30, MAP - 30); e.y = clamp(e.y, 30, MAP - 30);
+    if (e.ramT > 0) e.ramT -= dt;
+  }
+  // pairwise separation
+  const n = g.enemies.length;
+  for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+    const a = g.enemies[i], b = g.enemies[j];
+    if (a.dead || b.dead) continue;
+    const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy), min = 26 * (a.size + b.size);
+    if (d < min && d > 0.01) {
+      const push = (min - d) / 2, nx = dx / d, ny = dy / d;
+      a.x -= nx * push; a.y -= ny * push; b.x += nx * push; b.y += ny * push;
+    }
+  }
+  // ramming
+  for (const e of g.enemies) {
+    if (e.dead || !p.alive) continue;
+    if (dist(e.x, e.y, p.x, p.y) < tierOf(g).rad + 20 * e.size && p.ramT <= 0 && e.ramT <= 0) {
+      damagePlayer(g, 5 + e.level);
+      e.hp -= 9; e.hitFlash = 0.15;
+      p.ramT = 0.9; e.ramT = 0.9;
+      splash(g, (e.x + p.x) / 2, (e.y + p.y) / 2);
+      if (e.hp <= 0) sinkEnemy(g, e);
+    }
+  }
+  g.enemies = g.enemies.filter(e => !e.dead);
+}
+
+function updateTurrets(g, dt) {
+  const p = g.player;
+  for (const t of g.turrets) {
+    if (t.dead) continue;
+    if (t.hitFlash > 0) t.hitFlash -= dt;
+    if (!p.alive) continue;
+    const d = dist(t.x, t.y, p.x, p.y);
+    if (d < t.range) {
+      t.angle = Math.atan2(p.y - t.y, p.x - t.x);
+      t.fireT -= dt;
+      if (t.fireT <= 0) {
+        // spawn the shot just outside the island so the island doesn't block it
+        const isl = g.islands[t.islIdx];
+        const a = t.angle + (Math.random() - 0.5) * 0.08;
+        const need = Math.max(4, (isl.r + 10) - dist(t.x, t.y, isl.x, isl.y));
+        const sx = t.x + Math.cos(a) * need, sy = t.y + Math.sin(a) * need;
+        g.balls.push({ x: sx, y: sy, vx: Math.cos(a) * t.projSpeed, vy: Math.sin(a) * t.projSpeed,
+          life: 1.6, dmg: t.damage, fromPlayer: false, kind: t.weapon, angle: a, r: t.weapon === 'arrow' ? 3 : 4, dead: false });
+        t.fireT = t.interval;
+        if (d < 520) sfx('ecannon');
+      }
+    } else t.fireT = Math.min(t.fireT, 0.4);
+  }
+}
+
+function updateBase(g, dt) {
+  const bs = batteryStats(g);
+  g.batteryT -= dt;
+  if (!bs || g.batteryT > 0) return;
+  const tgt = nearestEnemy(g, g.base.x, g.base.y, bs.range);
+  if (!tgt) return;
+  const a = Math.atan2(tgt.y - g.base.y, tgt.x - g.base.x);
+  const sx = g.base.x + Math.cos(a) * (g.base.r + 12), sy = g.base.y + Math.sin(a) * (g.base.r + 12);
+  g.balls.push({ x: sx, y: sy, vx: Math.cos(a) * 460, vy: Math.sin(a) * 460,
+    life: 1.6, dmg: bs.dmg, fromPlayer: true, kind: 'cannon', r: 5, dead: false });
+  g.batteryT = bs.interval;
+  muzzle(g, sx, sy, a);
+  sfx('cannon');
+}
+
+/* v4: splash damage — cannons explode for AREA damage; pistols/arrows/rifles are direct single-target */
+const SPLASH_R = 52;       // cannon AoE radius vs ships/turrets
+const SPLASH_R_ISLE = 80;  // cannon AoE radius vs islands (bombard bonus for huts)
+const isSplashKind = (k) => k === 'cannon';
+
+function hurtEnemy(g, e, dmg) {
+  if (e.dead) return;
+  e.hp -= dmg; e.hitFlash = 0.12; g.stats.hits++;
+  if (e.hp <= 0) sinkEnemy(g, e);
+}
+function hurtTurret(g, t, dmg) {
+  if (t.dead) return;
+  t.hp -= dmg; t.hitFlash = 0.12; g.stats.hits++;
+  if (t.hp <= 0) sinkTurret(g, t);
+}
+function hurtHut(g, h, dmg) {
+  if (h.dead) return;
+  h.hp -= dmg; h.hitFlash = 0.12;
+  if (h.hp <= 0) {
+    h.dead = true; explode(g, h.x, h.y, 14); sfx('sink');
+    dropLoot(g, h.x, h.y, { planks: 1 + (Math.random() < 0.5 ? 1 : 0), powder: Math.random() < 0.4 ? 1 : 0, cloth: 0, cannons: 0 });
+    pushPickup(g, h.x, h.y, 'gold', { amount: 3 + Math.floor(Math.random() * 6) });
+    addToast(g, h.x, h.y - 26, '🏚️ Hut destroyed!');
+  }
+}
+function aoeDamage(g, x, y, radius, dmg, fromPlayer) {
+  if (fromPlayer) {
+    for (const e of g.enemies) { if (e.dead) continue; const rr = radius + 20 * e.size;
+      const dx = e.x - x, dy = e.y - y; if (dx * dx + dy * dy < rr * rr) hurtEnemy(g, e, dmg); }
+    for (const t of g.turrets) { if (t.dead) continue; const rr = radius + 24 * t.size;
+      const dx = t.x - x, dy = t.y - y; if (dx * dx + dy * dy < rr * rr) hurtTurret(g, t, dmg); }
+    for (const h of g.huts) { if (h.dead) continue; const rr = radius + 14;
+      const dx = h.x - x, dy = h.y - y; if (dx * dx + dy * dy < rr * rr) hurtHut(g, h, dmg); }
+    if (g.treasure) { const tr = g.treasure, rr = radius + 26;
+      const dx = tr.x - x, dy = tr.y - y;
+      if (dx * dx + dy * dy < rr * rr) { tr.hp -= dmg; g.stats.hits++; if (tr.hp <= 0) breakTreasure(g); } }
+  } else {
+    const p = g.player;
+    if (p.alive) { const rr = radius + tierOf(g).rad; const dx = p.x - x, dy = p.y - y;
+      if (dx * dx + dy * dy < rr * rr) damagePlayer(g, dmg); }
+    for (const m of g.mercs) { if (m.dead) continue; const rr = radius + 20;
+      const dx = m.x - x, dy = m.y - y;
+      if (dx * dx + dy * dy < rr * rr) {
+        m.hp -= dmg; m.hitFlash = 0.12;
+        if (m.hp <= 0) { m.dead = true; explode(g, m.x, m.y, 18); addToast(g, m.x, m.y - 40, '⚔️ Pirate ship sunk!'); } } }
+  }
+}
+function spawnHuts(g, isl) {
+  if (isl.kind === 'base') return;
+  const n = 2 + (isl.tier >= 3 ? 1 : 0) + (isl.tier >= 5 ? 1 : 0);
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * TAU, r = isl.r * (0.3 + Math.random() * 0.35);
+    const hp = 30 + isl.tier * 15;
+    g.huts.push({ x: isl.x + Math.cos(a) * r, y: isl.y + Math.sin(a) * r,
+      islIdx: isl.idx, hp, maxHp: hp, hitFlash: 0, dead: false });
+  }
+}
+/* v4: crew as marines — 6+ crew auto-fires pistols (direct damage) at close threats */
+function updateMarines(g, dt) {
+  const p = g.player;
+  p.marineT = (p.marineT || 0) - dt;
+  if (!p.alive || g.crew < 6 || p.marineT > 0) return;
+  const tgt = nearestThreat(g, p.x, p.y, 230);
+  if (!tgt) return;
+  const a = Math.atan2(tgt.y - p.y, tgt.x - p.x);
+  g.balls.push({ x: p.x, y: p.y, vx: Math.cos(a) * 560, vy: Math.sin(a) * 560,
+    life: 0.7, dmg: Math.round(2 + g.crew * 0.15), fromPlayer: true, kind: 'pistol', r: 3, dead: false });
+  p.marineT = 1.3;
+}
+function updateBalls(g, dt) {
+  const p = g.player;
+  for (const b of g.balls) {
+    b.x += b.vx * dt; b.y += b.vy * dt; b.life -= dt;
+    if (b.life <= 0 || b.x < 0 || b.y < 0 || b.x > MAP || b.y > MAP) { b.dead = true; continue; }
+    let blocked = false;
+    for (const isl of g.islands) {
+      const dx = b.x - isl.x, dy = b.y - isl.y;
+      if (dx * dx + dy * dy < isl.r * isl.r) { blocked = true; break; }
+    }
+    if (blocked) {
+      b.dead = true;
+      if (isSplashKind(b.kind)) { // v4: bombard — cannon explodes against the island, AoE hits huts/turrets near shore
+        explode(g, b.x, b.y, 15); aoeDamage(g, b.x, b.y, SPLASH_R_ISLE, b.dmg, b.fromPlayer); sfx('hit');
+      } else splash(g, b.x, b.y);
+      continue;
+    }
+    if (b.fromPlayer) {
+      if (isSplashKind(b.kind)) {
+        // v4: cannon explodes on first contact — AoE damages everything nearby
+        let boom = false;
+        for (const e of g.enemies) { if (e.dead) continue; const rr = 20 * e.size + b.r;
+          const dx = b.x - e.x, dy = b.y - e.y; if (dx * dx + dy * dy < rr * rr) { boom = true; break; } }
+        if (!boom) for (const t of g.turrets) { if (t.dead) continue; const rr = 24 * t.size + b.r;
+          const dx = b.x - t.x, dy = b.y - t.y; if (dx * dx + dy * dy < rr * rr) { boom = true; break; } }
+        if (!boom && g.treasure) { const tr = g.treasure, rr = 26 + b.r;
+          const dx = b.x - tr.x, dy = b.y - tr.y; if (dx * dx + dy * dy < rr * rr) boom = true; }
+        if (boom) { b.dead = true; explode(g, b.x, b.y, 16); aoeDamage(g, b.x, b.y, SPLASH_R, b.dmg, true); sfx('hit'); }
+      } else {
+        // v4: pistols/arrows/rifles — direct single-target damage, no splash
+        let hit = false;
+        for (const e of g.enemies) {
+          if (e.dead) continue;
+          const rr = 20 * e.size + b.r, dx = b.x - e.x, dy = b.y - e.y;
+          if (dx * dx + dy * dy < rr * rr) { hurtEnemy(g, e, b.dmg); b.dead = true; splash(g, b.x, b.y); sfx('hit'); hit = true; break; }
+        }
+        if (!hit) for (const t of g.turrets) {
+          if (t.dead) continue;
+          const rr = 24 * t.size + b.r, dx = b.x - t.x, dy = b.y - t.y;
+          if (dx * dx + dy * dy < rr * rr) { hurtTurret(g, t, b.dmg); b.dead = true; splash(g, b.x, b.y); sfx('hit'); hit = true; break; }
+        }
+        if (!hit && g.treasure) {
+          const tr = g.treasure, rr = 26 + b.r, dx = b.x - tr.x, dy = b.y - tr.y;
+          if (dx * dx + dy * dy < rr * rr) {
+            tr.hp -= b.dmg; b.dead = true; g.stats.hits++;
+            splash(g, b.x, b.y); sfx('hit');
+            if (tr.hp <= 0) breakTreasure(g);
+          }
+        }
+      }
+    } else {
+      if (isSplashKind(b.kind)) {
+        // v4: enemy cannon explodes near the player/mercs
+        let boom = false;
+        if (p.alive) { const rr = tierOf(g).rad + b.r, dx = b.x - p.x, dy = b.y - p.y;
+          if (dx * dx + dy * dy < rr * rr) boom = true; }
+        if (!boom) for (const m of g.mercs) { if (m.dead) continue;
+          const dx = b.x - m.x, dy = b.y - m.y, rr = 20 + b.r;
+          if (dx * dx + dy * dy < rr * rr) { boom = true; break; } }
+        if (boom) { b.dead = true; explode(g, b.x, b.y, 14); aoeDamage(g, b.x, b.y, SPLASH_R, b.dmg, false); }
+      } else {
+        if (p.alive) {
+          const dx = b.x - p.x, dy = b.y - p.y, rr = tierOf(g).rad + b.r;
+          if (dx * dx + dy * dy < rr * rr) { damagePlayer(g, b.dmg); b.dead = true; splash(g, b.x, b.y); }
+        }
+        if (!b.dead) for (const m of g.mercs) {
+          if (m.dead) continue;
+          const dx = b.x - m.x, dy = b.y - m.y, rr = 20 + b.r;
+          if (dx * dx + dy * dy < rr * rr) {
+            m.hp -= b.dmg; m.hitFlash = 0.12; b.dead = true;
+            splash(g, b.x, b.y);
+            if (m.hp <= 0) { m.dead = true; explode(g, m.x, m.y, 18); addToast(g, m.x, m.y - 40, '⚔️ Pirate ship sunk!'); }
+            break;
+          }
+        }
+      }
+    }
+  }
+  g.balls = g.balls.filter(b => !b.dead);
+}
+
+function updatePickups(g, dt) {
+  const p = g.player, cap = matCap(g);
+  for (const k of g.pickups) {
+    k.bob += dt * 3;
+    if (!p.alive) continue;
+    const d = dist(k.x, k.y, p.x, p.y);
+    if (d < MAGNET_DIST) {
+      const a = Math.atan2(p.y - k.y, p.x - k.x), s = 340 * dt;
+      k.x += Math.cos(a) * s; k.y += Math.sin(a) * s;
+    }
+    if (d < PICKUP_DIST) {
+      if (k.type === 'gold') {
+        const amt = k.amount * (g.sbuffs.gold > 0 ? 2 : 1);
+        k.dead = true; g.gold += amt;
+        addToast(g, p.x, p.y - 46, '+' + amt + ' 🪙');
+        sfx('gold');
+      } else if (k.type === 'citem') {
+        if (g.spares.length < SPARE_CAP) {
+          k.dead = true; g.spares.push(makeCannon(k.q));
+          addToast(g, p.x, p.y - 46, CANNON_Q[k.q].glyph + ' ' + CANNON_Q[k.q].label + ' cannon — see Shipyard');
+          sfx('pickup');
+        }
+      } else if (k.type === 'sbuff') {
+        if (applySeaBuff(g, k.b)) k.dead = true; // full buff bar: leave it floating
+      } else if (g.inv[k.type] < cap) {
+        k.dead = true; g.inv[k.type]++;
+        addToast(g, p.x, p.y - 46, '+1 ' + k.label);
+        sfx('pickup');
+      }
+    }
+  }
+  g.pickups = g.pickups.filter(k => !k.dead);
+}
+
+function updateToasts(g, dt) {
+  for (const t of g.toasts) { t.y -= 34 * dt; t.life -= dt; }
+  g.toasts = g.toasts.filter(t => t.life > 0);
+}
+
+function updateRegen(g, dt) {
+  const p = g.player;
+  if (!p.alive) return;
+  if (g.docked) {
+    p.hp = Math.min(p.maxHp, p.hp + baseHealPerSec(g) * dt);
+  } else {
+    p.hp = Math.min(p.maxHp, p.hp + regenPerSec(g) * dt);
+  }
+}
+
+function updateUpgradeQueue(g, dt) {
+  const q = g.upgQueue[0];
+  if (!q) return;
+  q.t -= dt;
+  if (q.t <= 0) {
+    g.upgQueue.shift();
+    applyUpgrade(g, q.type);
+    renderUpgradePanel(g);
+  }
+}
+
+function updateCapture(g, dt) {
+  const p = g.player;
+  for (const isl of g.islands) {
+    if (isl.captured || isl.kind === 'base') continue;
+    const threat = islandThreat(g, isl);
+    if (threat > 0) { isl.prog = Math.max(0, isl.prog - dt * 2); continue; }
+    const inRing = dist(p.x, p.y, isl.x, isl.y) < isl.r + CAPTURE_RING_PAD;
+    if (inRing && p.alive) {
+      isl.prog += dt;
+      if (isl.prog >= CAPTURE_TIME) {
+        isl.captured = true; isl.prog = 0;
+        g.islandsCaptured++;
+        g.score = g.sunk + g.islandsCaptured * 25;
+        // v3: first clear pays gold, afterwards materials only
+        const gg = 25 + Math.floor(Math.random() * 16);
+        pushPickup(g, isl.x, isl.y - isl.r - 60, 'gold', { amount: gg });
+        addToast(g, isl.x, isl.y - isl.r - 30, '🏝️ Island captured! +' + gg + ' 🪙');
+        if (typeof v4_onCapture === 'function') v4_onCapture(g, isl); else offerDoctrine(g); // v4 hook
+      }
+    } else isl.prog = Math.max(0, isl.prog - dt * 2);
+  }
+}
+
+/* ---------------- Cartoon-3D sprites (pre-rendered) ---------------- */
+let SPR = null;
+function shade(hex, f) {
+  const n = parseInt(hex.slice(1), 16);
+  const r = clamp(Math.round(((n >> 16) & 255) * f), 0, 255);
+  const g = clamp(Math.round(((n >> 8) & 255) * f), 0, 255);
+  const b = clamp(Math.round((n & 255) * f), 0, 255);
+  return 'rgb(' + r + ',' + g + ',' + b + ')';
+}
+function spriteCanvas(w, h, paint) {
+  const cv = document.createElement('canvas');
+  cv.width = Math.ceil(w * 2); cv.height = Math.ceil(h * 2); cv._hd = true;
+  const c = cv.getContext('2d');
+  c.scale(2, 2);
+  c.translate(cv.width / 2, cv.height / 2);
+  paint(c);
+  return cv;
+}
+
+function paintShip(c, o) {
+  const { L, B, hull, deck, sail, flag } = o;
+  const INK = '#3B2A20';
+
+  c.save();
+
+  // Hull path (pointed bow +x, stern -x via quadratics)
+  c.beginPath();
+  c.moveTo(L * 0.5, 0);
+  c.quadraticCurveTo(0, B * 0.5, -L * 0.5, 0);
+  c.quadraticCurveTo(0, -B * 0.5, L * 0.5, 0);
+  c.closePath();
+  c.fillStyle = hull;
+  c.fill();
+  c.strokeStyle = INK;
+  c.lineWidth = 3;
+  c.stroke();
+
+  // Woodcut hatch ticks clipped to hull
+  c.save();
+  c.beginPath();
+  c.moveTo(L * 0.5, 0);
+  c.quadraticCurveTo(0, B * 0.5, -L * 0.5, 0);
+  c.quadraticCurveTo(0, -B * 0.5, L * 0.5, 0);
+  c.closePath();
+  c.clip();
+
+  c.strokeStyle = 'rgba(59,42,32,0.55)';
+  c.lineWidth = 1.2;
+  c.beginPath();
+  for (let y = -B * 0.5 + 3; y <= B * 0.5; y += 6) {
+    for (let i = 0; i < 8; i++) {
+      const x = -L * 0.38 + i * (L * 0.76 / 7);
+      c.moveTo(x - 1.4, y - 1.4);
+      c.lineTo(x + 1.4, y + 1.4);
+    }
+  }
+  c.stroke();
+  c.restore();
+
+  // Deck ellipse with plank lines clipped
+  c.save();
+  c.beginPath();
+  c.ellipse(-L * 0.04, 0, L * 0.34, B * 0.28, 0, 0, TAU);
+  c.fillStyle = deck;
+  c.fill();
+  c.strokeStyle = INK;
+  c.lineWidth = 1.5;
+  c.stroke();
+  c.clip();
+
+  c.strokeStyle = INK;
+  c.lineWidth = 1;
+  c.beginPath();
+  for (let y = -B * 0.28; y <= B * 0.28; y += 4) {
+    c.moveTo(-L * 0.5, y);
+    c.lineTo(L * 0.5, y);
+  }
+  c.stroke();
+  c.restore();
+
+  // Cannon ports (5 per side)
+  c.fillStyle = INK;
+  for (let i = 0; i < 5; i++) {
+    const px = -L * 0.22 + i * (L * 0.44 / 4);
+    [-B * 0.35, B * 0.35].forEach(py => {
+      c.beginPath();
+      c.arc(px, py, 2.2, 0, TAU);
+      c.fill();
+    });
+  }
+
+  // Stern flag triangle
+  c.beginPath();
+  c.moveTo(-L * 0.5, -5);
+  c.lineTo(-L * 0.5 - 14, 0);
+  c.lineTo(-L * 0.5, 5);
+  c.closePath();
+  c.fillStyle = flag;
+  c.fill();
+  c.strokeStyle = INK;
+  c.lineWidth = 1.5;
+  c.stroke();
+
+  // Bow ink flourish
+  c.strokeStyle = INK;
+  c.lineWidth = 2.5;
+  c.beginPath();
+  c.moveTo(L * 0.5, 0);
+  c.quadraticCurveTo(L * 0.5 + 7, -5, L * 0.5 + 13, -2);
+  c.quadraticCurveTo(L * 0.5 + 16, 1, L * 0.5 + 12, 3);
+  c.stroke();
+
+  // Rigging from mastheads (y=-16) to bow/stern
+  const mastX = [-L * 0.16, L * 0.16];
+  c.strokeStyle = INK;
+  c.lineWidth = 1.2;
+  c.beginPath();
+  mastX.forEach(mx => {
+    c.moveTo(mx, -16);
+    c.lineTo(L * 0.5, 0);
+    c.moveTo(mx, -16);
+    c.lineTo(-L * 0.5, 0);
+  });
+  c.stroke();
+
+  // Masts at x=±L*0.16, y from -16 to 12
+  c.strokeStyle = INK;
+  c.lineWidth = 2.5;
+  c.beginPath();
+  mastX.forEach(mx => {
+    c.moveTo(mx, -16);
+    c.lineTo(mx, 12);
+  });
+  c.stroke();
+
+  // Oversized sails: rounded rect 19x32 at each mast
+  mastX.forEach(mx => {
+    const sx = mx - 9.5;
+    const sy = -16;
+    const sw = 19;
+    const sh = 32;
+    const r = 3;
+
+    c.beginPath();
+    if (c.roundRect) {
+      c.roundRect(sx, sy, sw, sh, r);
+    } else {
+      c.moveTo(sx + r, sy);
+      c.arcTo(sx + sw, sy, sx + sw, sy + sh, r);
+      c.arcTo(sx + sw, sy + sh, sx, sy + sh, r);
+      c.arcTo(sx, sy + sh, sx, sy, r);
+      c.arcTo(sx, sy, sx + sw, sy, r);
+      c.closePath();
+    }
+    c.fillStyle = sail;
+    c.fill();
+    c.strokeStyle = INK;
+    c.lineWidth = 2.5;
+    c.stroke();
+
+    // 2 curved seam lines
+    c.strokeStyle = INK;
+    c.lineWidth = 1.2;
+    c.beginPath();
+    c.moveTo(sx, sy + 10);
+    c.quadraticCurveTo(mx, sy + 13, sx + sw, sy + 10);
+    c.moveTo(sx, sy + 22);
+    c.quadraticCurveTo(mx, sy + 25, sx + sw, sy + 22);
+    c.stroke();
+
+    // Diamond emblem
+    c.fillStyle = INK;
+    c.beginPath();
+    c.moveTo(mx, sy + sh * 0.5 - 4);
+    c.lineTo(mx + 4, sy + sh * 0.5);
+    c.lineTo(mx, sy + sh * 0.5 + 4);
+    c.lineTo(mx - 4, sy + sh * 0.5);
+    c.closePath();
+    c.fill();
+  });
+
+  c.restore();
+}
+
+const PAL = {
+  player: { hull: '#7a6a55', deck: '#E8D5A8', sail: '#D9A441', flag: '#D9A441', L: 66, B: 30 },
+  sloop:  { hull: '#6a5a48', deck: '#E8D5A8', sail: '#F2E4C9', flag: '#C0392B', L: 60, B: 27 },
+  skirm:  { hull: '#5a5a5a', deck: '#E8D5A8', sail: '#F2E4C9', flag: '#C0392B', L: 48, B: 22 },
+  brute:  { hull: '#5a4a3a', deck: '#E8D5A8', sail: '#F2E4C9', flag: '#C0392B', L: 88, B: 40 },
+  boss:   { hull: '#3B2A20', deck: '#E8D5A8', sail: '#F2E4C9', flag: '#C0392B', L: 96, B: 44 },
+};
+
+function palm(c,x,y,s){
+  c.fillStyle='#3B2A20';
+  c.beginPath();
+  c.moveTo(x-2.5*s,y);
+  c.lineTo(x+2.5*s,y);
+  c.lineTo(x+1*s,y-16*s);
+  c.lineTo(x-1*s,y-16*s);
+  c.closePath();
+  c.fill();
+  c.strokeStyle='#3B2A20';
+  c.lineWidth=2.5*s;
+  c.lineCap='round';
+  for(let i=0;i<5;i++){
+    const a=-Math.PI/2+(i-2)*0.55;
+    c.beginPath();
+    c.moveTo(x,y-16*s);
+    c.quadraticCurveTo(
+      x+Math.cos(a)*5*s, y-16*s+Math.sin(a)*5*s,
+      x+Math.cos(a)*9*s, y-16*s+Math.sin(a)*9*s+3*s
+    );
+    c.stroke();
+  }
+}
+function islandGloss(c,r){
+  c.strokeStyle='#3B2A20';
+  c.lineWidth=2;
+  c.beginPath();
+  c.arc(0,0,r-6,Math.PI*1.1,Math.PI*1.5);
+  c.stroke();
+}
+
+const ISLAND_PAINT = {
+  base(c, r) {
+    c.beginPath();
+    c.arc(0, 0, r, 0, TAU);
+    c.fillStyle = '#F2E4C9';
+    c.fill();
+    c.strokeStyle = '#3B2A20';
+    c.lineWidth = 3;
+    c.stroke();
+
+    c.save();
+    c.beginPath();
+    c.arc(0, 0, r * 0.88, 0, TAU);
+    c.setLineDash([4, 4]);
+    c.lineWidth = 1.5;
+    c.strokeStyle = '#3B2A20';
+    c.stroke();
+    c.restore();
+
+    c.fillStyle = '#DECBA4';
+    c.strokeStyle = '#3B2A20';
+    c.lineWidth = 2;
+    c.beginPath();
+    c.rect(-r * 0.28, r * 0.72, r * 0.16, r * 0.38);
+    c.fill();
+    c.stroke();
+    c.beginPath();
+    c.rect(r * 0.12, r * 0.68, r * 0.16, r * 0.42);
+    c.fill();
+    c.stroke();
+
+    const houses = [
+      { x: -r * 0.35, y: -r * 0.18, w: r * 0.24, h: r * 0.18 },
+      { x: -r * 0.02, y: -r * 0.35, w: r * 0.28, h: r * 0.2 },
+      { x: r * 0.3, y: -r * 0.12, w: r * 0.22, h: r * 0.17 }
+    ];
+    houses.forEach(h => {
+      c.fillStyle = '#F2E4C9';
+      c.strokeStyle = '#3B2A20';
+      c.lineWidth = 1.5;
+      c.beginPath();
+      c.rect(h.x - h.w / 2, h.y, h.w, h.h);
+      c.fill();
+      c.stroke();
+
+      c.fillStyle = '#3B2A20';
+      c.fillRect(h.x - h.w * 0.15, h.y + h.h * 0.4, h.w * 0.3, h.h * 0.6);
+
+      c.beginPath();
+      c.moveTo(h.x - h.w * 0.6, h.y);
+      c.lineTo(h.x, h.y - h.h * 0.65);
+      c.lineTo(h.x + h.w * 0.6, h.y);
+      c.closePath();
+      c.fillStyle = '#C0392B';
+      c.fill();
+      c.stroke();
+    });
+
+    c.strokeStyle = '#3B2A20';
+    c.lineWidth = 2;
+    c.beginPath();
+    c.moveTo(-r * 0.32, r * 0.75);
+    c.lineTo(-r * 0.32, r * 0.45);
+    c.lineTo(-r * 0.46, r * 0.58);
+    c.moveTo(-r * 0.32, r * 0.45);
+    c.lineTo(-r * 0.22, r * 0.7);
+    c.moveTo(-r * 0.46, r * 0.58);
+    c.lineTo(-r * 0.46, r * 0.8);
+    c.stroke();
+
+    islandGloss(c, r);
+  },
+
+  atoll(c, r) {
+    c.beginPath();
+    c.arc(0, 0, r, 0, TAU);
+    c.fillStyle = '#F2E4C9';
+    c.fill();
+    c.strokeStyle = '#3B2A20';
+    c.lineWidth = 2.5;
+    c.stroke();
+
+    c.beginPath();
+    c.arc(0, 0, r * 0.58, 0, TAU);
+    c.fillStyle = '#3FA0A8';
+    c.fill();
+    c.strokeStyle = '#3B2A20';
+    c.lineWidth = 2;
+    c.stroke();
+
+    c.beginPath();
+    c.arc(0, 0, r * 0.2, 0, TAU);
+    c.fillStyle = '#F2E4C9';
+    c.fill();
+    c.strokeStyle = '#3B2A20';
+    c.lineWidth = 1.5;
+    c.stroke();
+
+    palm(c, -r * 0.68, -r * 0.15, r * 0.35);
+    palm(c, r * 0.65, r * 0.22, r * 0.32);
+
+    islandGloss(c, r);
+  },
+
+  rocky(c, r) {
+    c.beginPath();
+    c.arc(0, 0, r, 0, TAU);
+    c.fillStyle = '#8a8578';
+    c.fill();
+    c.strokeStyle = '#3B2A20';
+    c.lineWidth = 2.5;
+    c.stroke();
+
+    c.strokeStyle = '#3B2A20';
+    c.lineWidth = 1.5;
+    c.beginPath();
+    for (let i = 0; i < 9; i++) {
+      const a = 0.2 + i * 0.14;
+      const x1 = Math.cos(a) * r * 0.86;
+      const y1 = Math.sin(a) * r * 0.86;
+      const x2 = Math.cos(a) * r * 0.66 - r * 0.05;
+      const y2 = Math.sin(a) * r * 0.66 + r * 0.05;
+      c.moveTo(x1, y1);
+      c.lineTo(x2, y2);
+    }
+    c.stroke();
+
+    const pines = [
+      [-r * 0.45, -r * 0.3, r * 0.25],
+      [-r * 0.18, -r * 0.52, r * 0.28],
+      [r * 0.08, -r * 0.22, r * 0.3],
+      [-r * 0.08, r * 0.04, r * 0.24],
+      [r * 0.38, -r * 0.35, r * 0.26]
+    ];
+    c.fillStyle = '#3B2A20';
+    c.strokeStyle = '#3B2A20';
+    c.lineWidth = 1.5;
+    pines.forEach(([px, py, s]) => {
+      c.beginPath();
+      c.moveTo(px, py - s);
+      c.lineTo(px - s * 0.4, py);
+      c.lineTo(px + s * 0.4, py);
+      c.closePath();
+      c.fill();
+      c.stroke();
+    });
+
+    islandGloss(c, r);
+  },
+
+  volcanic(c, r) {
+    c.beginPath();
+    c.arc(0, 0, r, 0, TAU);
+    c.fillStyle = '#3B2A20';
+    c.fill();
+    c.strokeStyle = '#3B2A20';
+    c.lineWidth = 2.5;
+    c.stroke();
+
+    c.strokeStyle = '#C0392B';
+    c.lineWidth = 2;
+    c.beginPath();
+    c.moveTo(-r * 0.12, -r * 0.15);
+    c.lineTo(-r * 0.28, -r * 0.35);
+    c.lineTo(-r * 0.22, -r * 0.58);
+    c.lineTo(-r * 0.48, -r * 0.78);
+    c.stroke();
+
+    c.beginPath();
+    c.moveTo(r * 0.14, -r * 0.1);
+    c.lineTo(r * 0.32, -r * 0.28);
+    c.lineTo(r * 0.28, -r * 0.48);
+    c.lineTo(r * 0.56, -r * 0.68);
+    c.stroke();
+
+    c.beginPath();
+    c.moveTo(-r * 0.14, r * 0.1);
+    c.lineTo(-r * 0.35, r * 0.26);
+    c.lineTo(-r * 0.28, r * 0.52);
+    c.lineTo(-r * 0.58, r * 0.65);
+    c.stroke();
+
+    c.beginPath();
+    c.moveTo(r * 0.1, r * 0.14);
+    c.lineTo(r * 0.28, r * 0.32);
+    c.lineTo(r * 0.46, r * 0.4);
+    c.lineTo(r * 0.6, r * 0.66);
+    c.stroke();
+
+    c.beginPath();
+    c.ellipse(0, 0, r * 0.26, r * 0.18, 0, 0, TAU);
+    c.fillStyle = '#C0392B';
+    c.fill();
+    c.strokeStyle = '#3B2A20';
+    c.lineWidth = 3;
+    c.stroke();
+
+    c.beginPath();
+    c.ellipse(0, 0, r * 0.14, r * 0.09, 0, 0, TAU);
+    c.fillStyle = '#3B2A20';
+    c.fill();
+
+    c.beginPath();
+    c.arc(0, 0, r * 0.82, Math.PI * 1.05, Math.PI * 1.75);
+    c.strokeStyle = '#C0392B';
+    c.lineWidth = 2.5;
+    c.stroke();
+  },
+
+  fort(c, r) {
+    c.beginPath();
+    c.arc(0, 0, r, 0, TAU);
+    c.fillStyle = '#DECBA4';
+    c.fill();
+    c.strokeStyle = '#3B2A20';
+    c.lineWidth = 2.5;
+    c.stroke();
+
+    c.beginPath();
+    c.arc(0, 0, r * 0.8, 0, TAU);
+    c.strokeStyle = '#3B2A20';
+    c.lineWidth = 12;
+    c.stroke();
+
+    for (let i = 0; i < 14; i++) {
+      const angle = (i / 14) * TAU;
+      c.save();
+      c.translate(Math.cos(angle) * r * 0.8, Math.sin(angle) * r * 0.8);
+      c.rotate(angle);
+      c.fillStyle = '#3B2A20';
+      c.fillRect(-4, -9, 8, 18);
+      c.restore();
+    }
+
+    const towers = [
+      [-r * 0.42, -r * 0.28],
+      [r * 0.42, -r * 0.28]
+    ];
+    towers.forEach(([tx, ty]) => {
+      c.beginPath();
+      c.arc(tx, ty, r * 0.18, 0, TAU);
+      c.fillStyle = '#8a8578';
+      c.fill();
+      c.strokeStyle = '#3B2A20';
+      c.lineWidth = 2.5;
+      c.stroke();
+
+      c.fillStyle = '#3B2A20';
+      c.beginPath();
+      c.arc(tx, ty, r * 0.04, 0, TAU);
+      c.fill();
+    });
+
+    c.fillStyle = '#3B2A20';
+    c.beginPath();
+    c.rect(-r * 0.09, r * 0.73, r * 0.18, r * 0.15);
+    c.fill();
+
+    islandGloss(c, r);
+  },
+
+  skull(c, r) {
+    c.beginPath();
+    c.arc(0, 0, r, 0, TAU);
+    c.fillStyle = '#F2E4C9';
+    c.fill();
+    c.strokeStyle = '#3B2A20';
+    c.lineWidth = 2.5;
+    c.stroke();
+
+    c.save();
+    c.beginPath();
+    c.arc(0, 0, r * 0.88, 0, TAU);
+    c.setLineDash([4, 4]);
+    c.strokeStyle = '#3B2A20';
+    c.lineWidth = 1.5;
+    c.stroke();
+    c.restore();
+
+    c.beginPath();
+    c.arc(0, -r * 0.1, r * 0.36, 0, TAU);
+    c.strokeStyle = '#3B2A20';
+    c.lineWidth = 3;
+    c.stroke();
+
+    c.fillStyle = '#3B2A20';
+    c.beginPath();
+    c.arc(-r * 0.14, -r * 0.12, r * 0.08, 0, TAU);
+    c.arc(r * 0.14, -r * 0.12, r * 0.08, 0, TAU);
+    c.fill();
+
+    c.strokeStyle = '#3B2A20';
+    c.lineWidth = 2;
+    c.beginPath();
+    c.rect(-r * 0.18, r * 0.16, r * 0.36, r * 0.16);
+    c.stroke();
+
+    c.beginPath();
+    for (let x = -r * 0.12; x <= r * 0.13; x += r * 0.06) {
+      c.moveTo(x, r * 0.16);
+      c.lineTo(x, r * 0.32);
+    }
+    c.stroke();
+
+    c.strokeStyle = '#3B2A20';
+    c.lineWidth = 2;
+    c.beginPath();
+    c.moveTo(-r * 0.65, r * 0.42);
+    c.lineTo(-r * 0.62, r * 0.14);
+    c.lineTo(-r * 0.74, 0);
+    c.moveTo(-r * 0.62, r * 0.22);
+    c.lineTo(-r * 0.5, r * 0.06);
+    c.moveTo(-r * 0.62, r * 0.14);
+    c.lineTo(-r * 0.6, -r * 0.02);
+    c.stroke();
+
+    c.beginPath();
+    c.moveTo(r * 0.65, r * 0.42);
+    c.lineTo(r * 0.62, r * 0.14);
+    c.lineTo(r * 0.5, 0);
+    c.moveTo(r * 0.62, r * 0.22);
+    c.lineTo(r * 0.74, r * 0.06);
+    c.moveTo(r * 0.62, r * 0.14);
+    c.lineTo(r * 0.6, -r * 0.02);
+    c.stroke();
+
+    islandGloss(c, r);
+  }
+};
+EXIT:0
+
+function islandCanvas(isl){ const S=(isl.r+40)*2; return spriteCanvas(S,S,(c)=>{ ISLAND_PAINT[isl.kind](c,isl.r); }); }
+
+const TURRET_PAINT = {
+  arrow(c, s) {
+    const r = s * 0.5;
+    c.save();
+    c.strokeStyle = '#3B2A20';
+    c.fillStyle = '#3B2A20';
+    c.lineWidth = Math.max(1.5, s * 0.08);
+    c.lineCap = 'round';
+    c.lineJoin = 'round';
+
+    c.beginPath();
+    c.arc(-r * 0.2, 0, r * 0.65, -TAU * 0.22, TAU * 0.22);
+    c.stroke();
+
+    const yTip = r * 0.65 * Math.sin(TAU * 0.22);
+    const xTip = -r * 0.2 + r * 0.65 * Math.cos(TAU * 0.22);
+    c.lineWidth = Math.max(1, s * 0.04);
+    c.beginPath();
+    c.moveTo(xTip, -yTip);
+    c.lineTo(-r * 0.1, 0);
+    c.lineTo(xTip, yTip);
+    c.stroke();
+
+    c.lineWidth = Math.max(1.5, s * 0.07);
+    c.beginPath();
+    c.moveTo(-r * 0.55, 0);
+    c.lineTo(r * 0.65, 0);
+    c.stroke();
+
+    c.beginPath();
+    c.moveTo(r * 0.68, 0);
+    c.lineTo(r * 0.35, -r * 0.22);
+    c.lineTo(r * 0.44, 0);
+    c.lineTo(r * 0.35, r * 0.22);
+    c.closePath();
+    c.fill();
+
+    c.beginPath();
+    c.moveTo(-r * 0.5, -r * 0.18);
+    c.lineTo(-r * 0.32, 0);
+    c.lineTo(-r * 0.5, r * 0.18);
+    c.stroke();
+    c.restore();
+  },
+
+  pistol(c, s) {
+    const r = s * 0.5;
+    c.save();
+    c.fillStyle = '#3B2A20';
+    c.strokeStyle = '#3B2A20';
+
+    c.beginPath();
+    c.rect(-r * 0.3, -r * 0.24, r * 0.95, r * 0.22);
+    c.fill();
+
+    c.beginPath();
+    c.moveTo(-r * 0.3, -r * 0.05);
+    c.lineTo(-r * 0.65, r * 0.55);
+    c.lineTo(-r * 0.38, r * 0.62);
+    c.lineTo(-r * 0.08, 0.02);
+    c.closePath();
+    c.fill();
+
+    c.lineWidth = Math.max(1.2, s * 0.05);
+    c.beginPath();
+    c.arc(-r * 0.05, r * 0.14, r * 0.14, 0, TAU * 0.3);
+    c.stroke();
+
+    c.fillStyle = '#D9A441';
+    c.beginPath();
+    c.arc(-r * 0.14, -r * 0.13, r * 0.1, 0, TAU);
+    c.fill();
+    c.strokeStyle = '#3B2A20';
+    c.lineWidth = 1;
+    c.stroke();
+    c.restore();
+  },
+
+  rifle(c, s) {
+    const r = s * 0.5;
+    c.save();
+    c.fillStyle = '#3B2A20';
+    c.strokeStyle = '#3B2A20';
+
+    c.beginPath();
+    c.moveTo(-r * 0.85, r * 0.35);
+    c.lineTo(-r * 0.78, r * 0.08);
+    c.lineTo(-r * 0.2, -r * 0.06);
+    c.lineTo(-r * 0.2, r * 0.14);
+    c.closePath();
+    c.fill();
+
+    c.fillRect(-r * 0.25, -r * 0.09, r * 1.1, r * 0.13);
+
+    c.lineWidth = Math.max(1, s * 0.04);
+    c.beginPath();
+    c.moveTo(-r * 0.15, r * 0.08);
+    c.lineTo(r * 0.75, r * 0.08);
+    c.stroke();
+
+    c.beginPath();
+    c.arc(-r * 0.2, r * 0.15, r * 0.09, 0, TAU * 0.45);
+    c.stroke();
+    c.restore();
+  },
+
+  cannon(c, s) {
+    const r = s * 0.5;
+    c.save();
+    c.fillStyle = '#3B2A20';
+    c.strokeStyle = '#3B2A20';
+
+    c.lineWidth = Math.max(1.8, s * 0.08);
+    c.beginPath();
+    c.arc(-r * 0.22, r * 0.14, r * 0.36, 0, TAU);
+    c.stroke();
+
+    c.beginPath();
+    c.arc(-r * 0.22, r * 0.14, r * 0.1, 0, TAU);
+    c.fill();
+
+    c.beginPath();
+    c.moveTo(-r * 0.6, -r * 0.22);
+    c.lineTo(r * 0.6, -r * 0.14);
+    c.lineTo(r * 0.6, r * 0.14);
+    c.lineTo(-r * 0.6, r * 0.22);
+    c.closePath();
+    c.fill();
+
+    c.fillRect(r * 0.54, -r * 0.18, r * 0.14, r * 0.36);
+
+    c.beginPath();
+    c.arc(-r * 0.6, 0, r * 0.12, 0, TAU);
+    c.fill();
+
+    c.fillStyle = '#D9A441';
+    c.beginPath();
+    c.arc(-r * 0.05, 0, r * 0.12, 0, TAU);
+    c.fill();
+    c.strokeStyle = '#3B2A20';
+    c.lineWidth = 1;
+    c.stroke();
+    c.restore();
+  }
+};
+
+const TURRET_BARREL = {
+  arrow: { len: 14, color: '#3B2A20', w: 2.5 },
+  pistol: { len: 18, color: '#3B2A20', w: 3 },
+  rifle: { len: 24, color: '#3B2A20', w: 3.5 },
+  cannon: { len: 22, color: '#3B2A20', w: 6 }
+};
+
+function addParticle(g, p) {
+  if (g.parts.length > 220) g.parts.shift();
+  g.parts.push(p);
+}
+
+function ensureSprites(g) {
+  if (SPR || typeof document === 'undefined') return;
+  try {
+    SPR = { player: null, enemy: {}, island: {}, turret: {} };
+    const pp = PAL.player;
+    SPR.player = spriteCanvas(pp.L + 34, pp.B + 52, (c) => paintShip(c, pp));
+    if (typeof PAL_EXT !== 'undefined') Object.assign(PAL, PAL_EXT); // v4 hook: extra liveries
+    const etypes = ['sloop', 'skirm', 'brute', 'boss']
+      .concat(typeof v4_extraSprites === 'function' ? v4_extraSprites() : []); // v4 hook
+    for (const t of etypes) {
+      const p = PAL[t]; if (!p) continue;
+      SPR.enemy[t] = spriteCanvas(p.L + 34, p.B + 52, (c) => paintShip(c, p));
+    }
+    for (const isl of g.islands) SPR.island[isl.idx] = islandCanvas(isl);
+    for (const w of Object.keys(TURRET_PAINT))
+      SPR.turret[w] = spriteCanvas(64, 64, (c) => TURRET_PAINT[w](c, 1));
+  } catch (e) { SPR = null; }
+}
+
+/* ---------------- Rendering ---------------- */
+let canvas = null, ctx = null, view = { w: 800, h: 600 }, dpr = 1;
+function el(id) { return (typeof document !== 'undefined') ? document.getElementById(id) : null; }
+
+function healthBarInk(c,x,y,w,frac){ c.fillStyle='#F2E4C9'; c.fillRect(x-w/2,y,w,7); c.lineWidth=1.5; c.strokeStyle='#3B2A20'; c.strokeRect(x-w/2,y,w,7); c.fillStyle=frac<0.28?'#C0392B':'#3B2A20'; c.fillRect(x-w/2+1.5,y+1.5,(w-3)*clamp(frac,0,1),4); }
+function starburst(c,x,y,r,color,alpha){ c.save(); c.globalAlpha=alpha; c.strokeStyle=color; c.lineWidth=2.5; c.lineCap='round'; for(let i=0;i<5;i++){ const a=i/5*TAU+0.3; c.beginPath(); c.moveTo(x+Math.cos(a)*r*0.35,y+Math.sin(a)*r*0.35); c.lineTo(x+Math.cos(a)*r,y+Math.sin(a)*r); c.stroke(); } c.fillStyle=color; c.beginPath(); c.arc(x,y,2.5,0,TAU); c.fill(); c.restore(); }
+
+function drawSprite(c, img, x, y, angle, scale) {
+  c.save(); c.translate(x, y); c.rotate(angle); c.scale(scale || 1, scale || 1);
+  const div = img._hd ? 2 : 1;
+  c.drawImage(img, -img.width / (2 * div), -img.height / (2 * div), img.width / div, img.height / div);
+  c.restore();
+}
+function render(g) {
+  if (!ctx) return;
+  ensureSprites(g);
+  const c = ctx, W = view.w, H = view.h;
+  c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  // cartoon water: deep gradient + vignette
+  const grad = c.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, '#0e3a5e'); grad.addColorStop(0.6, '#0a2a46'); grad.addColorStop(1, '#061a30');
+  c.fillStyle = grad; c.fillRect(0, 0, W, H);
+  let shx = 0, shy = 0;
+  if (g.shake > 0) { shx = (Math.random() - 0.5) * g.shake; shy = (Math.random() - 0.5) * g.shake; }
+  c.save();
+  c.translate(W / 2 - g.cam.x + shx, H / 2 - g.cam.y + shy);
+  const x0 = g.cam.x - W / 2 - 60, x1 = g.cam.x + W / 2 + 60;
+  const y0 = g.cam.y - H / 2 - 60, y1 = g.cam.y + H / 2 + 60;
+c.fillStyle = '#1E6E7A';
+c.fillRect(x0, y0, x1 - x0, y1 - y0);
+
+c.strokeStyle = '#3FA0A8';
+c.lineWidth = 2;
+c.beginPath();
+const waveScroll = (g.t * 14) % 130;
+const wxStart = Math.floor((x0 - 130) / 130) * 130;
+const wyStart = Math.floor((y0 - 130) / 130) * 130;
+for (let wx = wxStart; wx <= x1 + 130; wx += 130) {
+  for (let wy = wyStart; wy <= y1 + 130; wy += 130) {
+    const col = Math.round(wx / 130);
+    const row = Math.round(wy / 130);
+    if ((col + row) % 2 !== 0) continue;
+    const px = wx + waveScroll;
+    const py = wy + Math.sin(g.t * 2 + wx * 0.05 + wy * 0.05) * 3;
+    c.moveTo(px - 2, py);
+    c.lineTo(px + 2, py);
+  }
+}
+c.stroke();
+
+const mapX = MAP.x ?? 0;
+const mapY = MAP.y ?? 0;
+const mapW = MAP.w ?? MAP.width ?? 2000;
+const mapH = MAP.h ?? MAP.height ?? 2000;
+c.strokeStyle = '#3B2A20';
+c.lineWidth = 5;
+c.setLineDash([]);
+c.strokeRect(mapX, mapY, mapW, mapH);
+c.lineWidth = 2;
+c.setLineDash([8, 6]);
+c.strokeRect(mapX + 8, mapY + 8, mapW - 16, mapH - 16);
+c.setLineDash([]);
+
+if (g.islands) {
+  for (const isl of g.islands) {
+    const irx = isl.rx || isl.r || 60;
+    const iry = isl.ry || isl.r || 60;
+
+    // dashed ink shoreline ellipse
+    c.strokeStyle = '#3B2A20';
+    c.lineWidth = 2;
+    c.setLineDash([6, 5]);
+    c.beginPath();
+    c.ellipse(isl.x, isl.y, irx + 12, iry + 12, isl.rot || 0, 0, TAU);
+    c.stroke();
+    c.setLineDash([]);
+
+    // draw SPR.island[isl.idx] sprite (_hd 0.5 scale) or parchment fallback
+    const ispr = SPR.island && SPR.island[isl.idx];
+    if (ispr && typeof drawSprite === 'function') {
+      drawSprite(ispr, isl.x, isl.y, isl.rot || 0, 0.5);
+    } else {
+      c.fillStyle = '#F2E4C9';
+      c.strokeStyle = '#3B2A20';
+      c.lineWidth = 2;
+      c.beginPath();
+      c.ellipse(isl.x, isl.y, irx, iry, isl.rot || 0, 0, TAU);
+      c.fill();
+      c.stroke();
+    }
+
+    // base+docked=brass dashed ring
+    if (isl.base || isl.isBase || isl.docked || g.docked === isl || (g.player && g.player.docked === isl)) {
+      c.strokeStyle = '#D9A441';
+      c.lineWidth = 2;
+      c.setLineDash([6, 4]);
+      c.beginPath();
+      c.arc(isl.x, isl.y, (isl.r || 60) + DOCK_PAD, 0, TAU);
+      c.stroke();
+      c.setLineDash([]);
+    }
+
+    // capture ring (ink, red if threat>0)
+    const capR = (isl.r || 60) + CAPTURE_RING_PAD;
+    const threat = typeof islandThreat === 'function' ? islandThreat(g, isl) : (isl.threat || 0);
+    c.strokeStyle = threat > 0 ? '#C0392B' : '#3B2A20';
+    c.lineWidth = 2;
+    c.setLineDash([]);
+    c.beginPath();
+    c.arc(isl.x, isl.y, capR, 0, TAU);
+    c.stroke();
+
+    // brass progress arc
+    const capProg = clamp((isl.captureProgress ?? (isl.capture ? isl.capture / CAPTURE_TIME : (isl.progress ?? 0))), 0, 1);
+    if (capProg > 0) {
+      c.strokeStyle = '#D9A441';
+      c.lineWidth = 4;
+      c.beginPath();
+      c.arc(isl.x, isl.y, capR, -Math.PI / 2, -Math.PI / 2 + TAU * capProg);
+      c.stroke();
+    }
+
+    // defender badge or captured check
+    if (isl.captured) {
+      c.strokeStyle = '#D9A441';
+      c.lineWidth = 3;
+      c.lineCap = 'round';
+      c.lineJoin = 'round';
+      c.beginPath();
+      c.moveTo(isl.x - 7, isl.y - capR - 10);
+      c.lineTo(isl.x - 2, isl.y - capR - 5);
+      c.lineTo(isl.x + 8, isl.y - capR - 16);
+      c.stroke();
+      c.lineCap = 'butt';
+      c.lineJoin = 'miter';
+    } else {
+      const bx = isl.x;
+      const by = isl.y - capR - 10;
+      const bw = 32;
+      const bh = 16;
+      c.fillStyle = '#F2E4C9';
+      c.strokeStyle = '#3B2A20';
+      c.lineWidth = 1.5;
+      c.beginPath();
+      if (c.roundRect) {
+        c.roundRect(bx - bw / 2, by - bh / 2, bw, bh, bh / 2);
+      } else {
+        c.arc(bx - bw / 2 + bh / 2, by, bh / 2, Math.PI / 2, Math.PI * 1.5);
+        c.arc(bx + bw / 2 - bh / 2, by, bh / 2, -Math.PI / 2, Math.PI / 2);
+        c.closePath();
+      }
+      c.fill();
+      c.stroke();
+
+      const badgeText = (isl.defenders ?? isl.guardCount ?? (isl.guards ? isl.guards.length : (threat > 0 ? threat : '⚔'))) + '';
+      c.font = 'bold 11px Georgia, serif';
+      c.fillStyle = threat > 0 ? '#C0392B' : '#3B2A20';
+      c.textAlign = 'center';
+      c.textBaseline = 'middle';
+      c.fillText(badgeText, bx, by);
+    }
+  }
+}
+
+if (g.pickups) {
+  for (const k of g.pickups) {
+    if (k.dead || k.collected) continue;
+    const bob = Math.sin(g.t * 3 + (k.x || 0) * 0.05 + (k.y || 0) * 0.05) * 3;
+    const kx = k.x;
+    const ky = k.y + bob;
+
+    // sbuff color ring
+    const sb = SBUFFS && (SBUFFS[k.buff] || SBUFFS[k.type] || SBUFFS[k.sbuff]);
+    const sbColor = typeof sb === 'string' ? sb : (sb?.color || k.sbuffColor);
+    if (sbColor) {
+      c.strokeStyle = sbColor;
+      c.lineWidth = 2;
+      c.setLineDash([]);
+      c.beginPath();
+      c.arc(kx, ky, 16, 0, TAU);
+      c.stroke();
+    }
+
+    // parchment circle ink border (gold=brass fill)
+    const isGold = k.type === 'gold' || k.kind === 'gold' || k.gold || k.isGold;
+    c.fillStyle = isGold ? '#D9A441' : '#F2E4C9';
+    c.strokeStyle = '#3B2A20';
+    c.lineWidth = 2;
+    c.setLineDash([]);
+    c.beginPath();
+    c.arc(kx, ky, 11, 0, TAU);
+    c.fill();
+    c.stroke();
+
+    // glyph ink 12px
+    c.font = '12px Georgia, serif';
+    c.fillStyle = '#3B2A20';
+    c.textAlign = 'center';
+    c.textBaseline = 'middle';
+    c.fillText(k.glyph || (isGold ? '⛁' : (k.icon || '✦')), kx, ky);
+
+    // label Georgia 11px ink with parchment outline
+    const label = k.label || k.name || k.text;
+    if (label) {
+      c.font = '11px Georgia, serif';
+      c.textAlign = 'center';
+      c.textBaseline = 'top';
+      c.strokeStyle = '#F2E4C9';
+      c.lineWidth = 3;
+      c.lineJoin = 'round';
+      c.strokeText(label, kx, ky + 14);
+      c.fillStyle = '#3B2A20';
+      c.fillText(label, kx, ky + 14);
+      c.lineJoin = 'miter';
+    }
+  }
+}
+
+const treasures = Array.isArray(g.treasure) ? g.treasure : (g.treasures || (g.treasure ? [g.treasure] : []));
+for (const tr of treasures) {
+  if (tr.dead || (tr.hp !== undefined && tr.hp <= 0)) continue;
+
+  // brass dashed ring
+  c.strokeStyle = '#D9A441';
+  c.lineWidth = 2;
+  c.setLineDash([5, 4]);
+  c.beginPath();
+  c.arc(tr.x, tr.y, tr.r || 22, 0, TAU);
+  c.stroke();
+  c.setLineDash([]);
+
+  // chest (ink outline, brass bands, ink coin glyph)
+  const tw = 22;
+  const th = 14;
+  const tx = tr.x - tw / 2;
+  const ty = tr.y - th / 2;
+
+  c.fillStyle = '#F2E4C9';
+  c.fillRect(tx, ty, tw, th);
+  c.strokeStyle = '#3B2A20';
+  c.lineWidth = 2;
+  c.strokeRect(tx, ty, tw, th);
+
+  c.fillStyle = '#D9A441';
+  c.fillRect(tx + 4, ty, 3, th);
+  c.fillRect(tx + tw - 7, ty, 3, th);
+
+  c.strokeStyle = '#3B2A20';
+  c.lineWidth = 1.5;
+  c.beginPath();
+  c.moveTo(tx, ty + th * 0.45);
+  c.lineTo(tx + tw, ty + th * 0.45);
+  c.stroke();
+
+  c.font = '10px Georgia, serif';
+  c.fillStyle = '#3B2A20';
+  c.textAlign = 'center';
+  c.textBaseline = 'middle';
+  c.fillText('⛁', tr.x, tr.y + 1);
+
+  // healthBarInk
+  if (typeof healthBarInk === 'function') {
+    if (healthBarInk.length === 1) healthBarInk(tr);
+    else healthBarInk(tr.x, tr.y - 16, tr.hp, tr.maxHp);
+  }
+}
+
+if (g.turrets) {
+  for (const t of g.turrets) {
+    if (t.dead || (t.hp !== undefined && t.hp <= 0)) continue;
+
+    // sprite
+    const tspr = SPR.turret || t.spr;
+    if (tspr && typeof drawSprite === 'function') {
+      drawSprite(tspr, t.x, t.y);
+    } else {
+      c.fillStyle = '#F2E4C9';
+      c.strokeStyle = '#3B2A20';
+      c.lineWidth = 2;
+      c.beginPath();
+      c.arc(t.x, t.y, 10, 0, TAU);
+      c.fill();
+      c.stroke();
+    }
+
+    // ink barrel rotated
+    c.save();
+    c.translate(t.x, t.y);
+    c.rotate(t.angle ?? t.rot ?? t.aim ?? t.dir ?? 0);
+    c.fillStyle = '#3B2A20';
+    c.fillRect(0, -2.5, 14, 5);
+    c.restore();
+
+    // red starburst if hitFlash
+    if (t.hitFlash > 0 && typeof starburst === 'function') {
+      starburst(t.x, t.y, 16, '#C0392B');
+    }
+
+    // healthBarInk
+    if (typeof healthBarInk === 'function') {
+      if (healthBarInk.length === 1) healthBarInk(t);
+      else healthBarInk(t.x, t.y - 16, t.hp, t.maxHp);
+    }
+  }
+}
+
+if (g.huts) {
+  for (const h of g.huts) {
+    if (h.dead || (h.hp !== undefined && h.hp <= 0)) continue;
+
+    // parchment walls ink outline, red roof, ink door
+    const hw = h.w || 20;
+    const hh = h.h || 14;
+    const hx = h.x - hw / 2;
+    const hy = h.y - hh / 2 + 3;
+
+    c.fillStyle = '#F2E4C9';
+    c.fillRect(hx, hy, hw, hh);
+    c.strokeStyle = '#3B2A20';
+    c.lineWidth = 2;
+    c.strokeRect(hx, hy, hw, hh);
+
+    c.fillStyle = '#C0392B';
+    c.strokeStyle = '#3B2A20';
+    c.lineWidth = 2;
+    c.beginPath();
+    c.moveTo(hx - 3, hy);
+    c.lineTo(h.x, hy - 10);
+    c.lineTo(hx + hw + 3, hy);
+    c.closePath();
+    c.fill();
+    c.stroke();
+
+    c.fillStyle = '#3B2A20';
+    c.fillRect(h.x - 3, hy + hh - 8, 6, 8);
+
+    // red starburst if hitFlash
+    if (h.hitFlash > 0 && typeof starburst === 'function') {
+      starburst(h.x, h.y, 16, '#C0392B');
+    }
+
+    // healthBarInk if damaged
+    if ((h.hp < h.maxHp || h.damaged) && typeof healthBarInk === 'function') {
+      if (healthBarInk.length === 1) healthBarInk(h);
+      else healthBarInk(h.x, h.y - 18, h.hp, h.maxHp);
+    }
+  }
+}
+EXIT:0
+
+for (const e of g.enemies) {
+  const key = e.boss ? 'boss' : e.type;
+  const spr = SPR && SPR.enemy && SPR.enemy[key];
+  if (spr) {
+    drawSprite(spr, e.x, e.y, e.angle || 0, e.scale || 1);
+  } else {
+    c.save();
+    c.translate(e.x, e.y);
+    c.rotate(e.angle || 0);
+    c.fillStyle = '#F2E4C9';
+    c.strokeStyle = '#3B2A20';
+    c.lineWidth = 1.5;
+    const w = e.w || (e.r ? e.r * 2 : 24);
+    const h = e.h || (e.r ? e.r * 1.4 : 16);
+    c.fillRect(-w / 2, -h / 2, w, h);
+    c.strokeRect(-w / 2, -h / 2, w, h);
+    c.restore();
+  }
+
+  if (e.hitFlash) {
+    starburst(e.x, e.y, '#C0392B', e.r || 16);
+  }
+
+  healthBarInk(e);
+
+  const lvl = e.level ?? (typeof tierOf === 'function' ? tierOf(e) : (e.lvl ?? 1));
+  const br = 8;
+  const bx = e.x + (e.r || 16) * 0.75;
+  const by = e.y - (e.r || 16) * 0.75;
+  c.save();
+  c.fillStyle = e.boss ? '#C0392B' : '#F2E4C9';
+  c.strokeStyle = '#3B2A20';
+  c.lineWidth = 1.5;
+  c.beginPath();
+  c.arc(bx, by, br, 0, TAU);
+  c.fill();
+  c.stroke();
+  c.fillStyle = e.boss ? '#F2E4C9' : '#3B2A20';
+  c.font = 'bold 9px Georgia, serif';
+  c.textAlign = 'center';
+  c.textBaseline = 'middle';
+  c.fillText(lvl, bx, by);
+  c.restore();
+}
+
+const p = g.player;
+if (p && !p.dead && (p.hp == null || p.hp > 0)) {
+  let pMaxR = CANNON_RANGE * (typeof cannonRngMult === 'function' ? cannonRngMult(p) : 1);
+  if (p.cannons && p.cannons.length) {
+    const rngs = p.cannons.map(cn => (cn.range || CANNON_RANGE) * (typeof cannonRngMult === 'function' ? cannonRngMult(p) : 1));
+    pMaxR = Math.max(...rngs);
+  } else if (p.pMaxR) {
+    pMaxR = p.pMaxR;
+  }
+  c.save();
+  c.strokeStyle = '#3B2A20';
+  c.lineWidth = 1.5;
+  c.setLineDash([5, 5]);
+  c.beginPath();
+  c.arc(p.x, p.y, pMaxR, 0, TAU);
+  c.stroke();
+  c.setLineDash([]);
+  c.restore();
+
+  const pSpr = SPR && (SPR.player || SPR.ship);
+  if (pSpr) {
+    drawSprite(pSpr, p.x, p.y, p.angle || 0, p.scale || 1);
+  } else {
+    c.save();
+    c.translate(p.x, p.y);
+    c.rotate(p.angle || 0);
+    c.fillStyle = '#F2E4C9';
+    c.strokeStyle = '#3B2A20';
+    c.lineWidth = 1.5;
+    const pw = p.w || 28, ph = p.h || 16;
+    c.fillRect(-pw / 2, -ph / 2, pw, ph);
+    c.strokeRect(-pw / 2, -ph / 2, pw, ph);
+    c.restore();
+  }
+
+  if (p.hitFlash) {
+    starburst(p.x, p.y, '#C0392B', p.r || 16);
+  }
+
+  const sbuffs = p.sbuffs || p.buffs || [];
+  const buffList = Array.isArray(sbuffs) ? sbuffs : Object.entries(sbuffs).map(([k, v]) => ({ key: k, ...(typeof v === 'object' ? v : { val: v }) }));
+  let buffR = (p.r || 16) + 4;
+  for (const sb of buffList) {
+    const bKey = sb.type || sb.key || sb.id || sb;
+    const def = (typeof SBUFFS === 'object' && SBUFFS) ? (SBUFFS[bKey] || SBUFFS[sb]) : null;
+    const col = sb.color || (def && (def.color || def.col)) || '#3FA0A8';
+    c.save();
+    c.strokeStyle = col;
+    c.lineWidth = 2;
+    c.beginPath();
+    c.arc(p.x, p.y, buffR, 0, TAU);
+    c.stroke();
+    c.restore();
+    buffR += 4;
+  }
+
+  const cannonList = Array.isArray(p.cannons) ? p.cannons : (typeof p.cannons === 'number' ? Array.from({ length: p.cannons }, (_, i) => ({ side: i % 2 === 0 ? 1 : -1 })) : []);
+  if (cannonList.length) {
+    c.save();
+    c.translate(p.x, p.y);
+    c.rotate(p.angle || 0);
+    cannonList.forEach((cn, idx) => {
+      const isWorn = (cn.hp != null && cn.hp <= CANNON_JAM_HP) || cn.worn || (p.cannonHp != null && p.cannonHp <= CANNON_JAM_HP);
+      c.fillStyle = isWorn ? '#C0392B' : '#3B2A20';
+      const side = cn.side ?? (idx % 2 === 0 ? 1 : -1);
+      const row = Math.floor(idx / 2);
+      const totalRows = Math.max(1, Math.ceil(cannonList.length / 2));
+      const nx = cn.x ?? (-8 + (row + 0.5) * (16 / totalRows));
+      const ny = cn.y ?? (side * ((p.h || 16) * 0.45));
+      c.beginPath();
+      c.arc(nx, ny, 2.5, 0, TAU);
+      c.fill();
+    });
+    c.restore();
+  }
+
+  healthBarInk(p);
+}
+
+if (g.mercs) {
+  for (const m of g.mercs) {
+    if (m.dead || (m.hp != null && m.hp <= 0)) continue;
+    const mSpr = SPR && (SPR.sloop || SPR.merc || (SPR.enemy && SPR.enemy.sloop));
+    if (mSpr) {
+      drawSprite(mSpr, m.x, m.y, m.angle || 0, m.scale || 1);
+    } else {
+      c.save();
+      c.translate(m.x, m.y);
+      c.rotate(m.angle || 0);
+      c.fillStyle = '#F2E4C9';
+      c.strokeStyle = '#3B2A20';
+      c.lineWidth = 1.5;
+      const mw = m.w || 24, mh = m.h || 14;
+      c.fillRect(-mw / 2, -mh / 2, mw, mh);
+      c.strokeRect(-mw / 2, -mh / 2, mw, mh);
+      c.restore();
+    }
+
+    if (m.hitFlash) {
+      starburst(m.x, m.y, '#C0392B', m.r || 16);
+    }
+
+    const mTimer = m.timer ?? m.contractTime ?? m.time ?? m.timeLeft ?? 0;
+    c.save();
+    c.strokeStyle = '#D9A441';
+    c.lineWidth = 2;
+    const mr = (m.r || 16) + 4;
+    c.beginPath();
+    if (mTimer > 0 && typeof MERC_TIME === 'number' && MERC_TIME > 0) {
+      const frac = clamp(mTimer / MERC_TIME, 0, 1);
+      c.arc(m.x, m.y, mr, -Math.PI / 2, -Math.PI / 2 + frac * TAU);
+    } else {
+      c.arc(m.x, m.y, mr, 0, TAU);
+    }
+    c.stroke();
+    c.restore();
+
+    if (mTimer > 0) {
+      c.save();
+      c.font = 'bold 11px Georgia, serif';
+      c.fillStyle = '#3B2A20';
+      c.textAlign = 'center';
+      c.textBaseline = 'middle';
+      c.fillText(Math.ceil(mTimer) + 's', m.x, m.y + (m.r || 16) + 12);
+      c.restore();
+    }
+
+    healthBarInk(m);
+  }
+}
+
+if (g.balls) {
+  for (const b of g.balls) {
+    if (b.type === 'arrow') {
+      const ang = b.angle ?? (b.vx || b.vy ? Math.atan2(b.vy, b.vx) : 0);
+      const len = b.len || 12;
+      c.save();
+      c.translate(b.x, b.y);
+      c.rotate(ang);
+      c.strokeStyle = '#3B2A20';
+      c.lineWidth = 1.5;
+      c.beginPath();
+      c.moveTo(-len, 0);
+      c.lineTo(0, 0);
+      c.stroke();
+      c.fillStyle = '#F2E4C9';
+      c.strokeStyle = '#3B2A20';
+      c.lineWidth = 1;
+      c.beginPath();
+      c.moveTo(2, 0);
+      c.lineTo(-4, -3);
+      c.lineTo(-2, 0);
+      c.lineTo(-4, 3);
+      c.closePath();
+      c.fill();
+      c.stroke();
+      c.restore();
+    } else if (b.type === 'pistol' || b.type === 'rifle') {
+      c.save();
+      c.fillStyle = '#3B2A20';
+      c.beginPath();
+      c.arc(b.x, b.y, b.type === 'rifle' ? 2 : 1.5, 0, TAU);
+      c.fill();
+      c.restore();
+    } else {
+      const br = b.r || 3;
+      c.save();
+      c.strokeStyle = '#F2E4C9';
+      c.lineWidth = 1.5;
+      c.beginPath();
+      c.arc(b.x, b.y, br + 1.5, 0, TAU);
+      c.stroke();
+      c.fillStyle = '#3B2A20';
+      c.beginPath();
+      c.arc(b.x, b.y, br, 0, TAU);
+      c.fill();
+      c.restore();
+    }
+  }
+}
+
+if (g.parts) {
+  for (const pt of g.parts) {
+    const a = clamp(pt.life / (pt.maxLife || 1), 0, 1);
+    if (pt.type === 'starburst') {
+      c.save();
+      c.globalAlpha = a;
+      c.strokeStyle = '#C0392B';
+      c.lineWidth = pt.lw || 1.5;
+      const r = pt.r || pt.size || 8;
+      c.beginPath();
+      for (let i = 0; i < 5; i++) {
+        const ang = (i * TAU) / 5 + (pt.angle || 0);
+        c.moveTo(pt.x, pt.y);
+        c.lineTo(pt.x + Math.cos(ang) * r, pt.y + Math.sin(ang) * r);
+      }
+      c.stroke();
+      c.restore();
+    } else if (pt.type === 'brassflash') {
+      c.save();
+      c.globalAlpha = a;
+      c.strokeStyle = '#D9A441';
+      c.lineWidth = pt.lw || 1.5;
+      const r = pt.r || pt.size || 8;
+      c.beginPath();
+      for (let i = 0; i < 4; i++) {
+        const ang = (i * TAU) / 4 + (pt.angle || 0);
+        c.moveTo(pt.x, pt.y);
+        c.lineTo(pt.x + Math.cos(ang) * r, pt.y + Math.sin(ang) * r);
+      }
+      c.stroke();
+      c.restore();
+    } else if (pt.type === 'inkdot') {
+      c.save();
+      c.globalAlpha = a;
+      c.fillStyle = '#3B2A20';
+      c.beginPath();
+      c.arc(pt.x, pt.y, pt.r || pt.size || 3, 0, TAU);
+      c.fill();
+      c.restore();
+    } else if (pt.type === 'inktick') {
+      c.save();
+      c.globalAlpha = a;
+      c.strokeStyle = '#3FA0A8';
+      c.lineWidth = pt.lw || 1.5;
+      const len = pt.len || pt.size || 6;
+      const ang = pt.angle ?? (pt.vx || pt.vy ? Math.atan2(pt.vy, pt.vx) : 0);
+      const dx = Math.cos(ang) * len * 0.5;
+      const dy = Math.sin(ang) * len * 0.5;
+      c.beginPath();
+      c.moveTo(pt.x - dx, pt.y - dy);
+      c.lineTo(pt.x + dx, pt.y + dy);
+      c.stroke();
+      c.restore();
+    } else if (pt.type === 'wakeline') {
+      c.save();
+      c.globalAlpha = a;
+      c.strokeStyle = '#3B2A20';
+      c.lineWidth = pt.lw || 1.5;
+      if (pt.x2 != null && pt.y2 != null) {
+        c.beginPath();
+        c.moveTo(pt.x, pt.y);
+        c.lineTo(pt.x2, pt.y2);
+        c.stroke();
+      } else {
+        const len = pt.len || 10;
+        const ang = pt.angle ?? (pt.vx || pt.vy ? Math.atan2(pt.vy, pt.vx) : 0);
+        c.beginPath();
+        c.moveTo(pt.x - Math.cos(ang) * len * 0.5, pt.y - Math.sin(ang) * len * 0.5);
+        c.lineTo(pt.x + Math.cos(ang) * len * 0.5, pt.y + Math.sin(ang) * len * 0.5);
+        c.stroke();
+      }
+      c.restore();
+    } else if (pt.type === 'ghost') {
+      c.save();
+      c.globalAlpha = a;
+      c.strokeStyle = '#F2E4C9';
+      c.lineWidth = pt.lw || 1.5;
+      c.lineCap = 'round';
+      const len = pt.len || 12;
+      for (let i = -1; i <= 1; i++) {
+        const ox = pt.x + i * 4;
+        c.beginPath();
+        c.moveTo(ox, pt.y + len * 0.5);
+        c.bezierCurveTo(ox - 3, pt.y + len * 0.2, ox + 3, pt.y - len * 0.2, ox, pt.y - len * 0.5);
+        c.stroke();
+      }
+      c.restore();
+    } else if (pt.type === 'puff') {
+      c.save();
+      c.globalAlpha = a;
+      c.fillStyle = '#8a8578';
+      c.beginPath();
+      c.arc(pt.x, pt.y, pt.r || pt.size || 5, 0, TAU);
+      c.fill();
+      c.restore();
+    }
+  }
+}
+
+c.textAlign = 'center';
+if (g.toasts) {
+  for (const t of g.toasts) {
+    const txt = t.text || t.msg || (typeof t === 'string' ? t : '');
+    c.save();
+    c.font = 'bold 15px Georgia, serif';
+    c.textAlign = 'center';
+    c.textBaseline = 'middle';
+    const tw = c.measureText(txt).width;
+    const pw = tw + 24;
+    const ph = 26;
+    const pr = ph / 2;
+    const tx = t.x ?? (g.width ? g.width / 2 : (c.canvas ? c.canvas.width / 2 : 0));
+    const ty = t.y ?? 50;
+    if (t.alpha != null) c.globalAlpha = t.alpha;
+    else if (t.life != null && t.maxLife) c.globalAlpha = clamp(t.life / t.maxLife, 0, 1);
+    c.fillStyle = '#F2E4C9';
+    c.strokeStyle = '#3B2A20';
+    c.lineWidth = 1.5;
+    c.beginPath();
+    if (typeof c.roundRect === 'function') {
+      c.roundRect(tx - pw / 2, ty - ph / 2, pw, ph, pr);
+    } else {
+      c.arc(tx - pw / 2 + pr, ty, pr, Math.PI / 2, Math.PI * 1.5);
+      c.arc(tx + pw / 2 - pr, ty, pr, Math.PI * 1.5, Math.PI / 2);
+      c.closePath();
+    }
+    c.fill();
+    c.stroke();
+    c.fillStyle = '#3B2A20';
+    c.fillText(txt, tx, ty);
+    c.restore();
+  }
+}
+c.restore();
+
+const j = g.input && g.input.joy;
+if (j && (j.active || j.down)) {
+  c.save();
+  const bx = j.baseX ?? j.x ?? 0;
+  const by = j.baseY ?? j.y ?? 0;
+  const br = j.r ?? j.radius ?? 40;
+  const kx = j.knobX ?? j.curX ?? j.kx ?? bx;
+  const ky = j.knobY ?? j.curY ?? j.ky ?? by;
+  const kr = j.knobR ?? j.kr ?? 18;
+
+  c.strokeStyle = '#3B2A20';
+  c.lineWidth = 2;
+  c.beginPath();
+  c.arc(bx, by, br, 0, TAU);
+  c.stroke();
+
+  c.fillStyle = '#D9A441';
+  c.strokeStyle = '#3B2A20';
+  c.lineWidth = 1.5;
+  c.beginPath();
+  c.arc(kx, ky, kr, 0, TAU);
+  c.fill();
+  c.stroke();
+  c.restore();
+}
+}
+EXIT:0
+
+/* ---------------- Audio (tiny, gesture-unlocked) ---------------- */
+let sfxOn = false, AC = null;
+function ensureAudio() {
+  if (typeof window === 'undefined') return null;
+  try {
+    if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)();
+    if (AC.state === 'suspended') AC.resume();
+  } catch (e) { return null; }
+  return AC;
+}
+function tone(f, d, type, vol) {
+  if (!sfxOn) return;
+  const ac = ensureAudio(); if (!ac) return;
+  try {
+    const o = ac.createOscillator(), gn = ac.createGain();
+    o.type = type || 'sine'; o.frequency.value = f;
+    gn.gain.setValueAtTime(vol || 0.12, ac.currentTime);
+    gn.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + d);
+    o.connect(gn); gn.connect(ac.destination);
+    o.start(); o.stop(ac.currentTime + d);
+  } catch (e) { /* silent */ }
+}
+function sfx(name) {
+  if (!sfxOn || typeof window === 'undefined') return;
+  try {
+    if (name === 'cannon') tone(90, 0.18, 'triangle', 0.16);
+    else if (name === 'ecannon') tone(70, 0.15, 'triangle', 0.07);
+    else if (name === 'hit') tone(220, 0.08, 'square', 0.06);
+    else if (name === 'phit') tone(140, 0.2, 'sawtooth', 0.12);
+    else if (name === 'pickup') tone(660, 0.09, 'sine', 0.08);
+    else if (name === 'queue') tone(440, 0.08, 'sine', 0.07);
+    else if (name === 'sink') { tone(160, 0.3, 'triangle', 0.14); setTimeout(() => tone(90, 0.4, 'triangle', 0.12), 120); }
+    else if (name === 'buy') { tone(520, 0.1, 'sine', 0.1); setTimeout(() => tone(780, 0.12, 'sine', 0.1), 90); }
+    else if (name === 'capture') { tone(440, 0.12, 'sine', 0.1); setTimeout(() => tone(660, 0.15, 'sine', 0.1), 110); }
+    else if (name === 'hire') { tone(330, 0.12, 'square', 0.1); setTimeout(() => tone(494, 0.14, 'square', 0.1), 100); }
+    else if (name === 'buff') { tone(880, 0.1, 'sine', 0.09); setTimeout(() => tone(1174, 0.14, 'sine', 0.09), 90); }
+    else if (name === 'treasure') { tone(392, 0.12, 'triangle', 0.12); setTimeout(() => tone(587, 0.12, 'triangle', 0.12), 100); setTimeout(() => tone(784, 0.2, 'triangle', 0.12), 200); }
+    else if (name === 'gold') { tone(1320, 0.07, 'sine', 0.07); }
+  } catch (e) { /* silent */ }
+}
+
+/* ---------------- HUD & panels (DOM) ---------------- */
+function banner(text) {
+  const b = el('banner');
+  if (!b) return;
+  b.textContent = text;
+  b.classList.remove('show'); void b.offsetWidth; b.classList.add('show');
+}
+function fmtCost(c) {
+  return Object.keys(c).map(k => c[k] + ' ' + k).join(' + ');
+}
+function renderUpgradePanel(g) {
+  const list = el('upglist');
+  if (!list) return;
+  const docked = g.docked;
+  const ds = el('dockstatus');
+  if (ds) {
+    ds.innerHTML = docked
+      ? '🏠 <b>Docked at home base</b> — upgrades finish fast, hull repairs rapidly'
+      : '🌊 <b>At sea</b> — upgrades take 5× longer (' + upgradeDuration(g).toFixed(1) + 's each). Dock at 🏠 for speed.';
+    ds.className = 'dockstatus ' + (docked ? 'docked' : 'sea');
+  }
+  const goldLine = el('goldline');
+  if (goldLine) goldLine.innerHTML = '🪙 <b>' + g.gold + '</b> gold &nbsp;•&nbsp; 👥 <b>' + g.crew + '</b>/' + CREW_MAX + ' crew &nbsp;•&nbsp; 🚢 <b>' + tierOf(g).name + '</b>';
+  list.innerHTML = '';
+  const q = g.upgQueue[0];
+  for (const type of Object.keys(UPG)) {
+    const def = UPG[type], lvl = g.upg[type], maxed = lvl >= def.max;
+    const afford = canAfford(g, type);
+    const row = document.createElement('div');
+    const building = q && q.type === type;
+    row.className = 'upgrow' + (maxed ? ' maxed' : afford ? ' afford' : '');
+    const extra = type === 'hull' ? 'HP ' + Math.ceil(g.player.hp) + '/' + g.player.maxHp
+      : type === 'powder' ? 'dmg ' + playerDamage(g)
+      : 'x' + speedMultForCloth(g.upg.cloth).toFixed(2);
+    let progHtml = '';
+    if (building) {
+      const pct = Math.round(100 * (1 - q.t / q.total));
+      progHtml = '<div class="qbar"><div class="qfill" style="width:' + pct + '%"></div></div>';
+    }
+    row.innerHTML = '<div class="upginfo"><b>' + def.label + '</b> <span class="lvl">Lv ' + lvl + '</span><br>' +
+      '<span class="sub">' + def.sub + ' — now: ' + extra + '</span><br>' +
+      '<span class="cost">' + (maxed ? 'MAXED' : 'Cost: ' + fmtCost(upgradeCost(type, lvl))) + '</span>' + progHtml + '</div>';
+    if (!maxed) {
+      const btn = document.createElement('button');
+      btn.textContent = building ? 'Building…' : (docked ? 'Upgrade' : 'Upgrade (' + upgradeDuration(g).toFixed(0) + 's)');
+      btn.disabled = !afford || !!building;
+      btn.onclick = () => { if (startUpgrade(g, type)) { renderUpgradePanel(g); syncHUD(g); } };
+      row.appendChild(btn);
+    }
+    list.appendChild(row);
+  }
+  // v3: hull tier upgrade (bigger ship, more gun ports, clumsier)
+  {
+    const maxed = g.tier >= TIERS.length - 1;
+    const afford = canAfford(g, 'tier');
+    const building = q && q.type === 'tier';
+    const row = document.createElement('div');
+    row.className = 'upgrow' + (maxed ? ' maxed' : afford ? ' afford' : '');
+    const next = maxed ? null : TIERS[g.tier + 1];
+    let progHtml = '';
+    if (building) {
+      const pct = Math.round(100 * (1 - q.t / q.total));
+      progHtml = '<div class="qbar"><div class="qfill" style="width:' + pct + '%"></div></div>';
+    }
+    row.innerHTML = '<div class="upginfo"><b>🚢 Hull Tier</b> <span class="lvl">' + tierOf(g).name + '</span><br>' +
+      '<span class="sub">' + (maxed ? 'Biggest hull afloat' :
+        '→ ' + next.name + ': ' + next.ports + ' gun ports, ' + next.turnDeg + '°/s turn, bigger target') +
+      ' — now: ' + tierOf(g).ports + ' ports</span><br>' +
+      '<span class="cost">' + (maxed ? 'MAXED' : 'Cost: ' + fmtCost(TIER_COST[g.tier + 1])) + '</span>' + progHtml + '</div>';
+    if (!maxed) {
+      const btn = document.createElement('button');
+      btn.textContent = building ? 'Building…' : (docked ? 'Refit' : 'Refit (' + upgradeDuration(g).toFixed(0) + 's)');
+      btn.disabled = !afford || !!building;
+      btn.onclick = () => { if (startUpgrade(g, 'tier')) { renderUpgradePanel(g); syncHUD(g); } };
+      row.appendChild(btn);
+    }
+    list.appendChild(row);
+  }
+  // v3: cannons — mounted (quality + condition) and spares (mount / strip)
+  {
+    const p = g.player;
+    const sec = document.createElement('div');
+    let avgCond = 0;
+    for (const cn of p.cannons) avgCond += cn.cond;
+    avgCond = p.cannons.length ? Math.round(avgCond / p.cannons.length) : 100;
+    sec.innerHTML = '<h3>💣 Cannons (' + p.cannons.length + '/' + tierOf(g).ports + ' mounted, avg condition ' + avgCond + '%)</h3>';
+    p.cannons.forEach((cn, i) => {
+      const r = document.createElement('div');
+      r.className = 'upgrow';
+      const worn = cn.cond < CANNON_JAM_HP;
+      r.innerHTML = '<div class="upginfo"><b>' + CANNON_Q[cn.q].glyph + ' ' + CANNON_Q[cn.q].label + '</b>' +
+        (cn.jamT > 0 ? ' <span style="color:#ff6b6b">JAMMED ' + cn.jamT.toFixed(0) + 's</span>' : '') + '<br>' +
+        '<span class="sub">dmg ×' + CANNON_Q[cn.q].dmg.toFixed(2) + ' · range ×' + CANNON_Q[cn.q].rng.toFixed(2) +
+        (worn ? ' · <span style="color:#ff6b6b">worn — may jam!</span>' : '') + '</span>' +
+        '<div class="qbar"><div class="qfill" style="width:' + Math.round(cn.cond) + '%;background:' +
+        (worn ? '#ff6b6b' : '#8fc3ff') + '"></div></div></div>';
+      sec.appendChild(r);
+    });
+    const repCost = p.cannons.reduce((s, cn) => s + Math.ceil((100 - cn.cond) * 0.15), 0);
+    if (repCost > 0) {
+      const r = document.createElement('div');
+      r.className = 'upgrow' + (docked && g.gold >= repCost ? ' afford' : '');
+      r.innerHTML = '<div class="upginfo"><b>🔧 Repair all cannons</b><br>' +
+        '<span class="cost">' + (docked ? 'Cost: ' + repCost + ' 🪙' : 'Requires docking') + '</span></div>';
+      const btn = document.createElement('button');
+      btn.textContent = 'Repair';
+      btn.disabled = !docked || g.gold < repCost;
+      btn.onclick = () => { if (repairCannons(g)) { renderUpgradePanel(g); syncHUD(g); } };
+      r.appendChild(btn);
+      sec.appendChild(r);
+    }
+    if (g.spares.length) {
+      const h = document.createElement('div');
+      h.innerHTML = '<h3>Spare cannons (' + g.spares.length + ')</h3>';
+      sec.appendChild(h);
+    }
+    g.spares.forEach((cn, i) => {
+      const r = document.createElement('div');
+      const canMount = p.cannons.length < tierOf(g).ports;
+      r.className = 'upgrow' + (canMount ? ' afford' : '');
+      r.innerHTML = '<div class="upginfo"><b>' + CANNON_Q[cn.q].glyph + ' ' + CANNON_Q[cn.q].label + '</b> <span class="lvl">' +
+        Math.round(cn.cond) + '%</span><br>' +
+        '<span class="sub">dmg ×' + CANNON_Q[cn.q].dmg.toFixed(2) + ' · range ×' + CANNON_Q[cn.q].rng.toFixed(2) +
+        (canMount ? '' : ' · no free gun port — upgrade Hull Tier') + '</span><br>' +
+        '<span class="cost">Strip for parts: +4 🪵 +2 🧨</span></div>';
+      const mb = document.createElement('button');
+      mb.textContent = 'Mount';
+      mb.disabled = !canMount;
+      mb.onclick = () => { if (mountCannon(g, i)) { renderUpgradePanel(g); syncHUD(g); } };
+      const sb = document.createElement('button');
+      sb.textContent = 'Strip';
+      sb.style.background = '#5a4a2a';
+      sb.onclick = () => { if (stripCannon(g, i)) { renderUpgradePanel(g); syncHUD(g); } };
+      r.appendChild(mb); r.appendChild(sb);
+      sec.appendChild(r);
+    });
+    list.appendChild(sec);
+  }
+  // v3: crew hire + pirate hire
+  {
+    const sec = document.createElement('div');
+    sec.innerHTML = '<h3>👥 Crew & Pirates</h3>';
+    const cc = crewHireCost(g.crew);
+    const cr = document.createElement('div');
+    cr.className = 'upgrow' + (docked && g.crew < CREW_MAX && g.gold >= cc ? ' afford' : '');
+    cr.innerHTML = '<div class="upginfo"><b>Hire crewman</b> <span class="lvl">' + g.crew + '/' + CREW_MAX + '</span><br>' +
+      '<span class="sub">Faster reload, repairs cannons out of combat</span><br>' +
+      '<span class="cost">' + (g.crew >= CREW_MAX ? 'MAXED' : docked ? 'Cost: ' + cc + ' 🪙' : 'Requires docking') + '</span></div>';
+    if (g.crew < CREW_MAX) {
+      const btn = document.createElement('button');
+      btn.textContent = 'Hire';
+      btn.disabled = !docked || g.gold < cc;
+      btn.onclick = () => { if (hireCrew(g)) { renderUpgradePanel(g); syncHUD(g); } };
+      cr.appendChild(btn);
+    }
+    sec.appendChild(cr);
+    const mc = mercCost(g);
+    const mr = document.createElement('div');
+    mr.className = 'upgrow' + (canHireMerc(g) ? ' afford' : '');
+    mr.innerHTML = '<div class="upginfo"><b>⚔️ Hire pirate ship</b> <span class="lvl">' + g.mercs.length + '/' + MERC_MAX + '</span><br>' +
+      '<span class="sub">Sails with you 60s at ~half your power, then leaves' +
+      (g.hireCd > 0 ? ' · ready in ' + Math.ceil(g.hireCd) + 's' : '') + '</span><br>' +
+      '<span class="cost">Cost: ' + mc + ' 🪙</span></div>';
+    const mb = document.createElement('button');
+    mb.textContent = 'Hire';
+    mb.disabled = !canHireMerc(g);
+    mb.onclick = () => { if (hireMerc(g)) { renderUpgradePanel(g); syncHUD(g); } };
+    mr.appendChild(mb);
+    sec.appendChild(mr);
+    list.appendChild(sec);
+  }
+  // base upgrades
+  const blist = el('baseupglist');
+  if (blist) {
+    blist.innerHTML = '';
+    for (const id of Object.keys(BASE_UPG)) {
+      const def = BASE_UPG[id], lvl = g.bupg[id], maxed = lvl >= def.max;
+      const afford = canAffordBase(g, id);
+      const row = document.createElement('div');
+      row.className = 'upgrow' + (maxed ? ' maxed' : afford ? ' afford' : '');
+      const nowTxt = id === 'drydock' ? 'build ' + (1.0 * drydockMult(g)).toFixed(2) + 's docked'
+        : id === 'repair' ? 'heal ' + Math.round(baseHealPerSec(g) / g.player.maxHp * 100) + '%/s docked'
+        : id === 'battery' ? (lvl ? 'range ' + batteryStats(g).range + ', dmg ' + batteryStats(g).dmg : 'not built')
+        : 'cap ' + matCap(g);
+      const gc = baseGoldCost(lvl);
+      row.innerHTML = '<div class="upginfo"><b>🏠 ' + def.label + '</b> <span class="lvl">Lv ' + lvl + '</span><br>' +
+        '<span class="sub">' + def.sub + ' — now: ' + nowTxt + '</span><br>' +
+        '<span class="cost">' + (maxed ? 'MAXED' : (docked ? 'Cost: ' + fmtCost(baseUpgradeCost(id, lvl)) + ' + ' + gc + ' 🪙' : 'Requires docking')) + '</span></div>';
+      if (!maxed) {
+        const btn = document.createElement('button');
+        btn.textContent = 'Build';
+        btn.disabled = !afford;
+        btn.onclick = () => { if (tryBuyBaseUpgrade(g, id)) { renderUpgradePanel(g); syncHUD(g); } };
+        row.appendChild(btn);
+      }
+      blist.appendChild(row);
+    }
+  }
+}
+function openUpgrade(g) {
+  if (g.state !== 'playing' && g.state !== 'upgrade') return;
+  g.state = 'upgrade';
+  renderUpgradePanel(g);
+  const p = el('upanel'); if (p) p.classList.add('open');
+}
+function closeUpgrade(g) {
+  if (g.state !== 'upgrade') return;
+  g.state = 'playing';
+  const p = el('upanel'); if (p) p.classList.remove('open');
+}
+function renderBestiary() {
+  const b = el('bestlist');
+  if (!b || b.children.length) return;
+  for (const e of BESTIARY) {
+    const row = document.createElement('div');
+    row.className = 'upgrow';
+    row.innerHTML = '<div class="upginfo"><b>' + e.name + '</b><br>' +
+      '<span class="sub">' + e.desc + '</span><br>' +
+      '<span class="cost">Drops: ' + e.drops + '</span></div>';
+    b.appendChild(row);
+  }
+}
+function toggleBestiary() {
+  const p = el('bpanel');
+  if (!p) return;
+  renderBestiary();
+  p.classList.toggle('open');
+}
+function showDoctrinePanel(g) {
+  const dp = el('dpanel'), opts = el('dopts');
+  if (!dp || !opts) return;
+  opts.innerHTML = '';
+  g.doctrineChoices.forEach((d, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'dopt';
+    btn.innerHTML = '<b>' + d.name + '</b><br><span>' + d.desc + '</span>';
+    btn.onclick = () => chooseDoctrine(g, i);
+    opts.appendChild(btn);
+  });
+  dp.classList.add('open');
+}
+function hideDoctrinePanel() { const dp = el('dpanel'); if (dp) dp.classList.remove('open'); }
+function gameOver(g) {
+  g.state = 'gameover';
+  clearSave(); // a lost run leaves no save behind
+  const up = el('upanel'); if (up) up.classList.remove('open');
+  const ov = el('over');
+  if (!ov) return;
+  el('ostats').innerHTML =
+    'Score: <b>' + g.score + '</b><br>Ships & turrets sunk: <b>' + g.sunk + '</b><br>Islands captured: <b>' + g.islandsCaptured + '</b><br>' +
+    'Accuracy: <b>' + (g.stats.shotsFired ? Math.round(100 * g.stats.hits / g.stats.shotsFired) : 0) + '%</b>';
+  ov.classList.add('open');
+}
+function syncHUD(g) {
+  const set = (id, v) => { const n = el(id); if (n) n.textContent = v; };
+  set('hscore', 'Score ' + g.score);
+  set('hsunk', g.sunk + ' sunk · ' + g.islandsCaptured + ' 🏝️');
+  set('mplanks', g.inv.planks); set('mcannons', g.inv.cannons); set('mpowder', g.inv.powder); set('mcloth', g.inv.cloth);
+  set('mgold', g.gold);
+  const tb = el('htest');
+  if (tb) tb.style.display = TEST_MODE ? '' : 'none';
+  const p = g.player;
+  const hpbar = el('hpbar');
+  if (hpbar) { hpbar.style.width = (100 * p.hp / p.maxHp) + '%'; hpbar.style.background = p.hp / p.maxHp > 0.5 ? '#3B2A20' : (p.hp / p.maxHp > 0.25 ? '#D9A441' : '#C0392B'); }
+  set('hptext', Math.ceil(p.hp) + '/' + p.maxHp);
+  const buffs = [];
+  if (g.buffs.rapid > 0) buffs.push('Rapid ' + Math.ceil(g.buffs.rapid) + 's');
+  if (g.buffs.barrage > 0) buffs.push('Barrage ' + Math.ceil(g.buffs.barrage) + 's');
+  if (g.buffs.wind > 0) buffs.push('Wind ' + Math.ceil(g.buffs.wind) + 's');
+  for (const bk of Object.keys(SBUFFS))
+    if (g.sbuffs[bk] > 0) buffs.push(SBUFFS[bk].glyph + ' ' + Math.ceil(g.sbuffs[bk]) + 's');
+  set('hbuffs', buffs.join(' · '));
+  const dock = el('hdock');
+  if (dock) { dock.textContent = g.docked ? '🏠 Docked' : ''; dock.style.display = g.docked ? '' : 'none'; }
+  const hb = el('hirebtn');
+  if (hb) {
+    const mc = mercCost(g);
+    hb.textContent = '⚔️ Hire ' + mc + '🪙';
+    hb.disabled = !canHireMerc(g);
+    hb.title = g.mercs.length >= MERC_MAX ? 'Max ' + MERC_MAX + ' pirate ships'
+      : (g.hireCd > 0 ? 'Ready in ' + Math.ceil(g.hireCd) + 's' : 'Hire a pirate ship for 60s (~half your power)');
+  }
+  const ub = el('upgbtn');
+  if (ub) ub.classList.toggle('pulse',
+    canAfford(g, 'hull') || canAfford(g, 'tier') || canAfford(g, 'powder') || canAfford(g, 'cloth') ||
+    canAffordBase(g, 'drydock') || canAffordBase(g, 'repair') || canAffordBase(g, 'battery') || canAffordBase(g, 'warehouse'));
+  // ship info panel (throttled)
+  g.hudT -= 1;
+  if (g.hudT <= 0) {
+    g.hudT = 15;
+    const si = el('shipinfo');
+    if (si) {
+      const spd = Math.round(playerSpeed(g)), trn = Math.round(playerTurnRate(g) * 180 / Math.PI);
+      let avgCond = 0;
+      for (const cn of p.cannons) avgCond += cn.cond;
+      avgCond = p.cannons.length ? Math.round(avgCond / p.cannons.length) : 100;
+      const sbuffTxt = [];
+      for (const bk of Object.keys(SBUFFS))
+        if (g.sbuffs[bk] > 0) sbuffTxt.push(SBUFFS[bk].glyph + Math.ceil(g.sbuffs[bk]) + 's');
+      si.innerHTML =
+        '<b>🚢 ' + tierOf(g).name + '</b> <span style="color:#9fb6cc">(' + p.cannons.length + '/' + tierOf(g).ports + ' guns)</span>' +
+        '<div>Hull <b>' + Math.ceil(p.hp) + '/' + p.maxHp + '</b>' + (g.docked ? ' <span class="heal">+repairing</span>' : '') + '</div>' +
+        '<div>🔥 ' + playerDamage(g) + ' dmg/shot · ' + playerReload(g).toFixed(2) + 's reload · guns ' + avgCond + '%</div>' +
+        '<div>⛵ ' + spd + ' speed · ' + trn + '°/s turn</div>' +
+        '<div>👥 ' + g.crew + ' crew · 🪙 ' + g.gold + ' gold' + (g.spares.length ? ' · 💣 ' + g.spares.length + ' spare' : '') + '</div>' +
+        (sbuffTxt.length ? '<div class="buffs">' + sbuffTxt.join(' ') + '</div>' : '') +
+        (buffs.length && !sbuffTxt.length ? '<div class="buffs">' + buffs.join(' · ') + '</div>' : '') +
+        (g.mercs.length ? '<div class="buffs">⚔️ ' + g.mercs.length + ' pirate' + (g.mercs.length > 1 ? 's' : '') + '</div>' : '') +
+        (g.upgQueue.length ? '<div class="queue">⚙️ ' + (g.upgQueue[0].type === 'tier' ? 'Hull Tier' : UPG[g.upgQueue[0].type].label) + ' ' + Math.ceil(g.upgQueue[0].t) + 's</div>' : '');
+    }
+  }
+}
+
+/* ---------------- Input ---------------- */
+function screenToWorld(g, sx, sy) {
+  return { x: g.cam.x + (sx - view.w / 2), y: g.cam.y + (sy - view.h / 2) };
+}
+function initInput(g) {
+  if (typeof document === 'undefined') return;
+  window.addEventListener('keydown', (e) => {
+    g.input.keys[e.code] = true;
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) e.preventDefault();
+    if (e.code === 'KeyU') { if (g.state === 'playing') openUpgrade(g); else if (g.state === 'upgrade') closeUpgrade(g); }
+    if (e.code === 'KeyB') toggleBestiary();
+    if (e.code === 'KeyP' || e.code === 'Escape') togglePause(g);
+  });
+  window.addEventListener('keyup', (e) => { g.input.keys[e.code] = false; });
+
+  const unlock = () => { sfxOn = true; ensureAudio(); };
+  window.addEventListener('pointerdown', unlock, { once: true });
+
+  canvas.addEventListener('mousemove', (e) => {
+    const r = canvas.getBoundingClientRect();
+    const w = screenToWorld(g, e.clientX - r.left, e.clientY - r.top);
+    g.input.mouse.wx = w.x; g.input.mouse.wy = w.y; g.input.mouse.in = true;
+  });
+  canvas.addEventListener('mouseleave', () => { g.input.mouse.in = false; });
+
+  canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault(); unlock();
+    const t = e.changedTouches[0];
+    g.input.joy.active = true; g.input.joy.sx = t.clientX; g.input.joy.sy = t.clientY;
+    g.input.joy.dx = 0; g.input.joy.dy = 0;
+  }, { passive: false });
+  canvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    const t = e.changedTouches[0];
+    g.input.joy.dx = t.clientX - g.input.joy.sx; g.input.joy.dy = t.clientY - g.input.joy.sy;
+  }, { passive: false });
+  const endTouch = (e) => { e.preventDefault(); g.input.joy.active = false; g.input.joy.dx = 0; g.input.joy.dy = 0; };
+  canvas.addEventListener('touchend', endTouch, { passive: false });
+  canvas.addEventListener('touchcancel', endTouch, { passive: false });
+
+  const ub = el('upgbtn'); if (ub) ub.onclick = () => openUpgrade(g);
+  const bb = el('bestbtn'); if (bb) bb.onclick = () => toggleBestiary();
+  const hb = el('hirebtn'); if (hb) hb.onclick = () => { if (hireMerc(g)) syncHUD(g); };
+  const uclose = el('upgclose'); if (uclose) uclose.onclick = () => closeUpgrade(g);
+  const bclose = el('bestclose'); if (bclose) bclose.onclick = () => toggleBestiary();
+  const pb = el('pausebtn'); if (pb) pb.onclick = () => togglePause(g);
+  const pb2 = el('pausebtn2'); if (pb2) pb2.onclick = () => togglePause(g);
+  const rb = el('restartbtn'); if (rb) rb.onclick = () => { clearSave(); restart(g); };
+  const sb = el('startbtn');
+  if (sb) sb.onclick = () => { unlock(); clearSave(); restart(g); el('menu').classList.remove('open'); g.state = 'playing'; };
+  const cb = el('continuebtn');
+  if (cb) cb.onclick = () => {
+    const d = loadSave();
+    if (d) { unlock(); applySave(g, d); el('menu').classList.remove('open'); g.state = 'playing'; syncHUD(g); banner('Welcome back, Captain'); }
+  };
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      saveGame(g);
+      if (g.state === 'playing' || g.state === 'upgrade') togglePause(g, true);
+    }
+  });
+  if (typeof window !== 'undefined') window.addEventListener('pagehide', () => saveGame(g));
+}
+function togglePause(g, silent) {
+  if (g.state === 'playing' || g.state === 'upgrade') {
+    const up = el('upanel'); if (up) up.classList.remove('open');
+    g.state = 'paused';
+    const p = el('paused'); if (p) p.classList.add('open');
+  } else if (g.state === 'paused') {
+    g.state = 'playing';
+    const p = el('paused'); if (p) p.classList.remove('open');
+  }
+}
+function restart(g) {
+  const fresh = createGame();
+  Object.keys(fresh).forEach(k => { g[k] = fresh[k]; });
+  SPR = null; // re-render islands for the fresh game
+  const ov = el('over'); if (ov) ov.classList.remove('open');
+  const p = el('paused'); if (p) p.classList.remove('open');
+  const up = el('upanel'); if (up) up.classList.remove('open');
+  g.state = 'playing';
+}
+
+/* ---------------- Boot & loop ---------------- */
+function resize() {
+  if (!canvas || typeof window === 'undefined') return;
+  dpr = Math.min(2, window.devicePixelRatio || 1);
+  const vv = window.visualViewport;
+  const w = Math.floor(vv ? vv.width : window.innerWidth);
+  const h = Math.floor(vv ? vv.height : window.innerHeight);
+  view.w = w; view.h = h;
+  canvas.width = Math.floor(w * dpr); canvas.height = Math.floor(h * dpr);
+  canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+}
+function simActive(g) { return g.state === 'playing' || g.state === 'upgrade'; }
+let game = null, lastTs = 0;
+function frame(ts) {
+  if (typeof requestAnimationFrame !== 'undefined') requestAnimationFrame(frame);
+  const dt = Math.min(0.05, ((ts - lastTs) / 1000) || 0.016);
+  lastTs = ts;
+  if (!game) return;
+  if (simActive(game)) updateWorld(game, dt);
+  render(game);
+  syncHUD(game);
+}
+function boot() {
+  if (typeof document === 'undefined') return null;
+  canvas = el('game');
+  if (canvas) ctx = canvas.getContext('2d');
+  game = createGame();
+  game.state = 'menu';
+  resize();
+  if (typeof window !== 'undefined') {
+    window.addEventListener('resize', resize);
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', resize);
+  }
+  initInput(game);
+  const menu = el('menu'); if (menu) menu.classList.add('open');
+  const cb = el('continuebtn');
+  if (cb) cb.style.display = loadSave() ? '' : 'none';
+  if (typeof requestAnimationFrame !== 'undefined') requestAnimationFrame(frame);
+  return game;
+}
+if (typeof document !== 'undefined' && typeof window !== 'undefined') {
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    TAU, clamp, dist, angDiff, mulberry32, shade,
+    MAP, LEASH_DIST, AGGRO_DIST, CANNON_RANGE, CAPTURE_TIME,
+    REGEN_DELAY, REGEN_OOC, REGEN_COMBAT, SEA_UPGRADE_MULT,
+    TEST_MODE, DROP_MULT, SAVE_VERSION, AUTOSAVE_SECS,
+    UPG, upgradeCost, damageAfterPowder, speedMultForCloth, powderMult,
+    TIERS, TIER_COST, tierOf,
+    CANNON_Q, rollCannonQuality, makeCannon, cannonDmgMult, cannonRngMult,
+    CANNON_WEAR, CANNON_JAM_HP, SPARE_CAP,
+    CREW_MAX, crewHireCost, crewReloadMult,
+    goldForKill, MERC_TIME, MERC_MAX, MERC_CD, mercBaseCost, mercCost, canHireMerc, hireMerc,
+    SBUFFS, SBUFF_CAP, DMG_BONUS_CAP, activeSbuffCount, applySeaBuff, seaDmgBonus,
+    TREASURE_CD_MIN, TREASURE_CD_MAX, treasureCooldown,
+    FREE_UPG_CHANCE, freeUpgradeChoices, grantRandomUpgrade,
+    serializeGame, saveGame, loadSave, clearSave, applySave,
+    baseGoldCost, hireCrew, mountCannon, stripCannon, repairCannons,
+    spawnTreasure, updateTreasure, breakTreasure, spawnSeaBuff, updateSeaBuffs, updateMercs,
+    smoke, wake, explode, splash, muzzle, sfx,
+    enemyStatsForLevel, enemyTypeForTier, applyEnemyType, dropsForEnemy, shouldLeash,
+    TURRETS, turretStats, DOCTRINES, BESTIARY, MAT_LABEL,
+    BASE_UPG, baseUpgradeCost, drydockMult, matCap, upgradeDuration, baseHealPerSec, batteryStats, regenPerSec,
+    makeIslands, defenderShipCount, spawnPatrol, islandThreat,
+    createGame, resetPlayer, playerDamage, playerSpeed, playerReload, playerTurnRate,
+    nearestEnemy, nearestThreat, canAfford, startUpgrade, applyUpgrade,
+    canAffordBase, tryBuyBaseUpgrade,
+    sinkEnemy, sinkTurret, damagePlayer, dropLoot, pushPickup, addToast,
+    SPLASH_R, SPLASH_R_ISLE, isSplashKind, hurtEnemy, hurtTurret, hurtHut, aoeDamage, spawnHuts, updateMarines,
+    offerDoctrine, chooseDoctrine, updateWorld, simActive,
+    render, boot, resize, syncHUD, renderUpgradePanel, el,
+  };
+}
+
+/* ===== v4_ships.js ===== */
+if (typeof require === 'function' && typeof module !== 'undefined') { try { Object.assign(globalThis, require('./game.js')); } catch (e) {} }
+
+globalThis.SHIP_TYPES_EXT = {
+  gunboat: { hp: 0.55, dmg: 0.7, speed: 1.5, range: 240, size: 0.7, guns: 1 },
+  schooner: { hp: 0.85, dmg: 1.0, speed: 1.25, range: 280, size: 0.9, guns: 2 },
+  cutter: { hp: 1.3, dmg: 1.1, speed: 0.9, range: 300, size: 1.1, guns: 2 },
+  manowar: { hp: 2.6, dmg: 2.2, speed: 0.55, range: 360, size: 2.3, guns: 6 },
+};
+
+globalThis.v4_extraType = function (tier, i) {
+  const r = Math.random();
+  if (tier === 1) return r < 0.30 ? 'gunboat' : null;
+  if (tier === 2) return r < 0.25 ? 'gunboat' : (r < 0.45 ? 'schooner' : null);
+  if (tier === 3) return r < 0.20 ? 'schooner' : (r < 0.40 ? 'cutter' : null);
+  if (tier >= 4) return r < 0.20 ? 'schooner' : (r < 0.40 ? 'cutter' : (r < 0.55 ? 'gunboat' : null));
+  return null;
+}
+
+globalThis.v4_rollHeavy = function (tier) {
+  return Math.random() < (tier >= 4 ? 0.12 : tier === 3 ? 0.05 : 0);
+}
+
+globalThis.PAL_EXT = {
+  gunboat:  { hull: '#6a5a48', deck: '#E8D5A8', sail: '#F2E4C9', flag: '#C0392B', L: 44, B: 20 },
+  schooner: { hull: '#5a5a5a', deck: '#E8D5A8', sail: '#F2E4C9', flag: '#C0392B', L: 56, B: 25 },
+  cutter:   { hull: '#5a4a3a', deck: '#E8D5A8', sail: '#F2E4C9', flag: '#C0392B', L: 64, B: 28 },
+  manowar:  { hull: '#3B2A20', deck: '#E8D5A8', sail: '#F2E4C9', flag: '#C0392B', L: 110, B: 50 },
+};
+EXIT:0
+
+globalThis.v4_extraSprites = function () { return ['gunboat', 'schooner', 'cutter', 'manowar']; }
+
+if (typeof module !== 'undefined' && module.exports) module.exports = { SHIP_TYPES_EXT, v4_extraType, v4_rollHeavy, PAL_EXT, v4_extraSprites };
+
+/* ===== v4_boarding.js ===== */
+if (typeof require === 'function' && typeof module !== 'undefined') { try { Object.assign(globalThis, require('./game.js')); } catch (e) {} }
+
+globalThis.v4_wantsBoarding = function (e) { return !!(e.heavy || e.boss); }
+
+globalThis.v4_genShipLoot = function (e) {
+  const heavy = !!e.heavy;
+  const rand = (min, max) => Math.round(min + Math.random() * (max - min));
+  const cannons = [];
+  if (heavy) {
+    const weights = [
+      ['longnine', 0.15], ['carronade', 0.25], ['standard', 0.45], ['rusted', 0.15],
+    ];
+    for (let i = 0, n = rand(2, 4); i < n; i++) {
+      let r = Math.random(), q = 'rusted';
+      for (const [quality, weight] of weights) { r -= weight; if (r < 0) { q = quality; break; } }
+      cannons.push({ q, cond: rand(55, 100) });
+    }
+  } else {
+    for (let i = 0, n = rand(1, 2); i < n; i++) cannons.push({ q: rollCannonQuality(), cond: rand(55, 100) });
+  }
+  return {
+    title: heavy ? "🚢 Boarding the Man-o'-War!" : '🚢 Boarding the enemy ship!',
+    cannons, crew: rand(heavy ? 3 : 2, heavy ? 6 : 4),
+    mats: heavy ? { planks: rand(8, 16), powder: rand(6, 12), cloth: rand(4, 10) } : { planks: rand(5, 10), powder: rand(4, 8), cloth: rand(2, 6) },
+    sails: true, gold: rand(heavy ? 40 : 25, heavy ? 80 : 50),
+  };
+}
+
+globalThis.v4_genIslandLoot = function (isl) {
+  const rand = (min, max) => Math.round(min + Math.random() * (max - min));
+  const tier = Number(isl.tier) || 0;
+  return {
+    title: (isl.kind || 'Island') + ' stores',
+    cannons: tier >= 3 ? [{ q: rollCannonQuality(), cond: rand(60, 100) }] : [],
+    crew: rand(1, 3),
+    mats: { planks: 4 + 4 * tier, powder: 3 + 3 * tier, cloth: 2 + 2 * tier },
+    sails: false, gold: 20 + 10 * tier,
+  };
+}
+
+globalThis.v4_onSinkBoarding = function (g, e) {
+  g.pendingBoard = { kind: 'ship', loot: v4_genShipLoot(e) };
+  g.state = 'boarding';
+  if (typeof document !== 'undefined') v4_renderBoarding(g);
+}
+
+globalThis.v4_onCapture = function (g, isl) {
+  g.pendingBoard = { kind: 'island', isl, loot: v4_genIslandLoot(isl) };
+  g.boardThenDoctrine = true;
+  g.state = 'boarding';
+  if (typeof document !== 'undefined') v4_renderBoarding(g);
+}
+
+globalThis.v4_renderBoarding = function (g) {
+  const panel = el('boardpanel'), list = el('boardlist');
+  if (!panel || !list || !g.pendingBoard) return;
+  panel.classList.add('open');
+  const loot = g.pendingBoard.loot;
+  list.innerHTML = '';
+  const heading = document.createElement('h2'); heading.textContent = loot.title; list.appendChild(heading);
+  const addRow = (label, actions) => {
+    const row = document.createElement('div'); row.className = 'upgrow';
+    const info = document.createElement('div'); info.className = 'upginfo'; info.textContent = label; row.appendChild(info);
+    for (const action of actions) {
+      const button = document.createElement('button'); button.className = 'btn'; button.textContent = action.label;
+      if (action.disabled) button.disabled = true;
+      button.onclick = () => { if (button.disabled || !g.pendingBoard) return; action.run(); sfx('pickup'); v4_renderBoarding(g); };
+      row.appendChild(button);
+    }
+    list.appendChild(row);
+  };
+  const remove = fn => { fn(); };
+  loot.cannons.forEach((c, index) => {
+    const q = CANNON_Q[c.q] || CANNON_Q.standard;
+    const disabled = g.spares.length >= SPARE_CAP;
+    addRow('💣 ' + q.label + ' cannon (' + c.cond + '%)', [
+      { label: disabled ? 'Full' : 'Mount', disabled, run: () => { const cannon = makeCannon(c.q); cannon.cond = c.cond; g.spares.push(cannon); mountCannon(g, g.spares.length - 1); loot.cannons.splice(index, 1); } },
+      { label: 'Strip +4🪵+2🧨', run: () => { const cannon = makeCannon(c.q); cannon.cond = c.cond; g.spares.push(cannon); stripCannon(g, g.spares.length - 1); loot.cannons.splice(index, 1); } },
+    ]);
+  });
+  if (loot.crew > 0) addRow('🧑‍✈️ ' + loot.crew + ' crew', [
+    { label: 'Take aboard', run: () => { g.crew = Math.min(CREW_MAX, g.crew + loot.crew); loot.crew = 0; } },
+    { label: 'Sell +' + loot.crew * 8 + '🪙', run: () => { g.gold += loot.crew * 8; loot.crew = 0; } },
+  ]);
+  for (const [key, glyph] of [['planks', '🪵'], ['powder', '🧨'], ['cloth', '🧵']]) if (loot.mats[key] > 0) {
+    const amount = Math.max(0, Math.min(loot.mats[key], matCap(g) - (g.inv[key] || 0)));
+    addRow(glyph + ' ' + loot.mats[key] + ' ' + key + (amount < loot.mats[key] ? ' (take ' + amount + ', capped)' : ''), [
+      { label: 'Take', run: () => { g.inv[key] = Math.min(matCap(g), (g.inv[key] || 0) + loot.mats[key]); loot.mats[key] = 0; } },
+    ]);
+  }
+  if (loot.sails) addRow('⛵ Fine sails', [{ label: 'Take → sail upgrade', run: () => { applyUpgrade(g, 'cloth'); loot.sails = false; } }]);
+  if (loot.gold > 0) addRow('🪙 ' + loot.gold + ' gold', [{ label: 'Take', run: () => { g.gold += loot.gold; loot.gold = 0; } }]);
+  const salvage = document.createElement('button'); salvage.className = 'btn'; salvage.textContent = '🔥 SALVAGE EVERYTHING';
+  salvage.onclick = () => {
+    if (!g.pendingBoard) return;
+    const cap = matCap(g);
+    g.inv.planks = Math.min(cap, (g.inv.planks || 0) + loot.cannons.length * 4 + loot.mats.planks + (loot.sails ? 0 : 0));
+    g.inv.powder = Math.min(cap, (g.inv.powder || 0) + loot.cannons.length * 2 + loot.mats.powder);
+    g.inv.cloth = Math.min(cap, (g.inv.cloth || 0) + loot.mats.cloth);
+    g.gold += loot.crew * 5 + loot.gold;
+    if (loot.sails) g.inv.cloth = Math.min(cap, g.inv.cloth + 6);
+    sfx('pickup'); v4_closeBoarding(g);
+  };
+  list.appendChild(salvage);
+  const leave = document.createElement('button'); leave.className = 'btn'; leave.textContent = 'Leave the wreck'; leave.onclick = () => { if (g.pendingBoard) { sfx('buy'); v4_closeBoarding(g); } };
+  list.appendChild(leave);
+}
+
+globalThis.v4_closeBoarding = function (g) {
+  const panel = el('boardpanel'); if (panel) panel.classList.remove('open');
+  g.pendingBoard = null; g.state = 'playing';
+  if (g.boardThenDoctrine) { g.boardThenDoctrine = false; offerDoctrine(g); }
+}
+
+if (typeof module !== 'undefined' && module.exports) module.exports = { v4_wantsBoarding, v4_genShipLoot, v4_genIslandLoot, v4_onSinkBoarding, v4_onCapture, v4_renderBoarding, v4_closeBoarding };
+
+</script>
+</body>
+</html>
