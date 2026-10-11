@@ -611,7 +611,7 @@ function createGame() {
 function resetPlayer(g) {
   const b = g.base || { x: 500, y: 3050 };
   g.player = {
-    x: b.x, y: b.y + 200, vx: 0, vy: 0, angle: -Math.PI / 2,
+    x: b.x, y: b.y + (b.r || 150) + 130, vx: 0, vy: 0, angle: Math.PI / 2,
     hp: 100, maxHp: 100, baseDmg: 10,
     cannons: [makeCannon('standard'), makeCannon('standard')],
     fireT: 0, alive: true, hitFlash: 0, ramT: 0, lastDmgT: -99,
@@ -2512,7 +2512,7 @@ function syncHUD(g) {
   // ship info panel (throttled)
   g.hudT -= 1;
   if (g.hudT <= 0) {
-    g.hudT = 15;
+    g.hudT = 5;
     const si = el('shipinfo');
     if (si) {
       const spd = Math.round(playerSpeed(g)), trn = Math.round(playerTurnRate(g) * 180 / Math.PI);
