@@ -499,8 +499,8 @@ function rollCannonQuality(rng) {
   return r < 0.45 ? 'rusted' : r < 0.80 ? 'standard' : r < 0.92 ? 'carronade' : 'longnine';
 }
 function makeCannon(q) { return { q: q || 'standard', cond: 100, jamT: 0 }; }
-function cannonDmgMult(c) { return CANNON_Q[c.q].dmg; }
-function cannonRngMult(c) { return CANNON_Q[c.q].rng; }
+function cannonDmgMult(c) { const q=c&&c.q; return (CANNON_Q[q]||CANNON_Q.standard).dmg; }
+function cannonRngMult(c) { const q=c&&c.q; return (CANNON_Q[q]||CANNON_Q.standard).rng; }
 const CANNON_WEAR = 0.25;   // condition lost per shot fired
 const CANNON_JAM_HP = 25;   // below this condition cannons can jam
 const SPARE_CAP = 8;
@@ -1879,8 +1879,8 @@ function spriteCanvas(w, h, paint) {
   const cv = document.createElement('canvas');
   cv.width = Math.ceil(w * 2); cv.height = Math.ceil(h * 2); cv._hd = true;
   const c = cv.getContext('2d');
-  c.scale(2, 2);
   c.translate(cv.width / 2, cv.height / 2);
+  c.scale(2, 2);
   paint(c);
   return cv;
 }
@@ -2603,7 +2603,11 @@ function ensureSprites(g) {
 let canvas = null, ctx = null, view = { w: 800, h: 600 }, dpr = 1;
 function el(id) { return (typeof document !== 'undefined') ? document.getElementById(id) : null; }
 
-function healthBarInk(c,x,y,w,frac){ c.fillStyle='#F2E4C9'; c.fillRect(x-w/2,y,w,7); c.lineWidth=1.5; c.strokeStyle='#3B2A20'; c.strokeRect(x-w/2,y,w,7); c.fillStyle=frac<0.28?'#C0392B':'#3B2A20'; c.fillRect(x-w/2+1.5,y+1.5,(w-3)*clamp(frac,0,1),4); }
+function healthBarInk(a,b,cc,d,e){ let c,x,y,w,frac;
+  if(a&&typeof a==='object'&&b===undefined){ const o=a; c=(typeof ctx!=='undefined')?ctx:null; x=o.x; y=(o.y||0)-20; w=Math.max(36,o.maxHp||o.hp||36); frac=(o.maxHp&&o.maxHp>0)?o.hp/o.maxHp:1; }
+  else { c=a; x=b; y=cc; w=d; frac=e; }
+  if(!c||!isFinite(x)||!isFinite(y)||!(w>0)) return;
+  c.fillStyle='#F2E4C9'; c.fillRect(x-w/2,y,w,7); c.lineWidth=1.5; c.strokeStyle='#3B2A20'; c.strokeRect(x-w/2,y,w,7); c.fillStyle=frac<0.28?'#C0392B':'#3B2A20'; c.fillRect(x-w/2+1.5,y+1.5,(w-3)*clamp(frac,0,1),4); }
 function starburst(c,x,y,r,color,alpha){ c.save(); c.globalAlpha=alpha; c.strokeStyle=color; c.lineWidth=2.5; c.lineCap='round'; for(let i=0;i<5;i++){ const a=i/5*TAU+0.3; c.beginPath(); c.moveTo(x+Math.cos(a)*r*0.35,y+Math.sin(a)*r*0.35); c.lineTo(x+Math.cos(a)*r,y+Math.sin(a)*r); c.stroke(); } c.fillStyle=color; c.beginPath(); c.arc(x,y,2.5,0,TAU); c.fill(); c.restore(); }
 
 function drawSprite(c, img, x, y, angle, scale) {
@@ -2624,9 +2628,10 @@ function render(g) {
   let shx = 0, shy = 0;
   if (g.shake > 0) { shx = (Math.random() - 0.5) * g.shake; shy = (Math.random() - 0.5) * g.shake; }
   c.save();
-  c.translate(W / 2 - g.cam.x + shx, H / 2 - g.cam.y + shy);
-  const x0 = g.cam.x - W / 2 - 60, x1 = g.cam.x + W / 2 + 60;
-  const y0 = g.cam.y - H / 2 - 60, y1 = g.cam.y + H / 2 + 60;
+  const ZM = 1.7;
+  c.translate(W / 2 + shx, H / 2 + shy); c.scale(ZM, ZM); c.translate(-g.cam.x, -g.cam.y);
+  const x0 = g.cam.x - W / (2 * ZM) - 60, x1 = g.cam.x + W / (2 * ZM) + 60;
+  const y0 = g.cam.y - H / (2 * ZM) - 60, y1 = g.cam.y + H / (2 * ZM) + 60;
 c.fillStyle = '#1E6E7A';
 c.fillRect(x0, y0, x1 - x0, y1 - y0);
 
@@ -2679,7 +2684,7 @@ if (g.islands) {
     // draw SPR.island[isl.idx] sprite (_hd 0.5 scale) or parchment fallback
     const ispr = SPR.island && SPR.island[isl.idx];
     if (ispr && typeof drawSprite === 'function') {
-      drawSprite(ispr, isl.x, isl.y, isl.rot || 0, 0.5);
+      drawSprite(c, ispr, isl.x, isl.y, isl.rot || 0, 0.5);
     } else {
       c.fillStyle = '#F2E4C9';
       c.strokeStyle = '#3B2A20';
@@ -2862,7 +2867,7 @@ for (const tr of treasures) {
   // healthBarInk
   if (typeof healthBarInk === 'function') {
     if (healthBarInk.length === 1) healthBarInk(tr);
-    else healthBarInk(tr.x, tr.y - 16, tr.hp, tr.maxHp);
+    else healthBarInk(c, tr.x, tr.y - 16, tr.hp, tr.maxHp);
   }
 }
 
@@ -2871,9 +2876,9 @@ if (g.turrets) {
     if (t.dead || (t.hp !== undefined && t.hp <= 0)) continue;
 
     // sprite
-    const tspr = SPR.turret || t.spr;
+    const tspr = (SPR.turret && SPR.turret[t.weapon]) || t.spr;
     if (tspr && typeof drawSprite === 'function') {
-      drawSprite(tspr, t.x, t.y);
+      drawSprite(c, tspr, t.x, t.y);
     } else {
       c.fillStyle = '#F2E4C9';
       c.strokeStyle = '#3B2A20';
@@ -2894,13 +2899,13 @@ if (g.turrets) {
 
     // red starburst if hitFlash
     if (t.hitFlash > 0 && typeof starburst === 'function') {
-      starburst(t.x, t.y, 16, '#C0392B');
+      starburst(c, t.x, t.y, 16, '#C0392B', 1);
     }
 
     // healthBarInk
     if (typeof healthBarInk === 'function') {
       if (healthBarInk.length === 1) healthBarInk(t);
-      else healthBarInk(t.x, t.y - 16, t.hp, t.maxHp);
+      else healthBarInk(c, t.x, t.y - 16, t.hp, t.maxHp);
     }
   }
 }
@@ -2937,13 +2942,13 @@ if (g.huts) {
 
     // red starburst if hitFlash
     if (h.hitFlash > 0 && typeof starburst === 'function') {
-      starburst(h.x, h.y, 16, '#C0392B');
+      starburst(c, h.x, h.y, 16, '#C0392B', 1);
     }
 
     // healthBarInk if damaged
     if ((h.hp < h.maxHp || h.damaged) && typeof healthBarInk === 'function') {
       if (healthBarInk.length === 1) healthBarInk(h);
-      else healthBarInk(h.x, h.y - 18, h.hp, h.maxHp);
+      else healthBarInk(c, h.x, h.y - 18, h.hp, h.maxHp);
     }
   }
 }
@@ -2953,7 +2958,7 @@ for (const e of g.enemies) {
   const key = e.boss ? 'boss' : e.type;
   const spr = SPR && SPR.enemy && SPR.enemy[key];
   if (spr) {
-    drawSprite(spr, e.x, e.y, e.angle || 0, e.scale || 1);
+    drawSprite(c, spr, e.x, e.y, e.angle || 0, e.scale || 1);
   } else {
     c.save();
     c.translate(e.x, e.y);
@@ -2969,7 +2974,7 @@ for (const e of g.enemies) {
   }
 
   if (e.hitFlash) {
-    starburst(e.x, e.y, '#C0392B', e.r || 16);
+    starburst(c, e.x, e.y, e.r || 16, '#C0392B', 1);
   }
 
   healthBarInk(e);
@@ -2996,9 +3001,9 @@ for (const e of g.enemies) {
 
 const p = g.player;
 if (p && !p.dead && (p.hp == null || p.hp > 0)) {
-  let pMaxR = CANNON_RANGE * (typeof cannonRngMult === 'function' ? cannonRngMult(p) : 1);
+  let pMaxR = Math.max.apply(null, p.cannons.map(cn => CANNON_RANGE * (typeof cannonRngMult === 'function' ? cannonRngMult(cn) : 1)).concat([CANNON_RANGE]));
   if (p.cannons && p.cannons.length) {
-    const rngs = p.cannons.map(cn => (cn.range || CANNON_RANGE) * (typeof cannonRngMult === 'function' ? cannonRngMult(p) : 1));
+    const rngs = p.cannons.map(cn => (cn.range || CANNON_RANGE) * (typeof cannonRngMult === 'function' ? cannonRngMult(cn) : 1));
     pMaxR = Math.max(...rngs);
   } else if (p.pMaxR) {
     pMaxR = p.pMaxR;
@@ -3015,7 +3020,7 @@ if (p && !p.dead && (p.hp == null || p.hp > 0)) {
 
   const pSpr = SPR && (SPR.player || SPR.ship);
   if (pSpr) {
-    drawSprite(pSpr, p.x, p.y, p.angle || 0, p.scale || 1);
+    drawSprite(c, pSpr, p.x, p.y, p.angle || 0, p.scale || 1);
   } else {
     c.save();
     c.translate(p.x, p.y);
@@ -3030,7 +3035,7 @@ if (p && !p.dead && (p.hp == null || p.hp > 0)) {
   }
 
   if (p.hitFlash) {
-    starburst(p.x, p.y, '#C0392B', p.r || 16);
+    starburst(c, p.x, p.y, p.r || 16, '#C0392B', 1);
   }
 
   const sbuffs = p.sbuffs || p.buffs || [];
@@ -3078,7 +3083,7 @@ if (g.mercs) {
     if (m.dead || (m.hp != null && m.hp <= 0)) continue;
     const mSpr = SPR && (SPR.sloop || SPR.merc || (SPR.enemy && SPR.enemy.sloop));
     if (mSpr) {
-      drawSprite(mSpr, m.x, m.y, m.angle || 0, m.scale || 1);
+      drawSprite(c, mSpr, m.x, m.y, m.angle || 0, m.scale || 1);
     } else {
       c.save();
       c.translate(m.x, m.y);
@@ -3093,7 +3098,7 @@ if (g.mercs) {
     }
 
     if (m.hitFlash) {
-      starburst(m.x, m.y, '#C0392B', m.r || 16);
+      starburst(c, m.x, m.y, m.r || 16, '#C0392B', 1);
     }
 
     const mTimer = m.timer ?? m.contractTime ?? m.time ?? m.timeLeft ?? 0;
@@ -3694,7 +3699,8 @@ function syncHUD(g) {
 
 /* ---------------- Input ---------------- */
 function screenToWorld(g, sx, sy) {
-  return { x: g.cam.x + (sx - view.w / 2), y: g.cam.y + (sy - view.h / 2) };
+  const ZM = 1.7;
+  return { x: g.cam.x + (sx - view.w / 2) / ZM, y: g.cam.y + (sy - view.h / 2) / ZM };
 }
 function initInput(g) {
   if (typeof document === 'undefined') return;
