@@ -60,6 +60,8 @@ h1{font-size:44px;color:#ffd93d;text-shadow:0 0 24px #b3541e,0 4px 0 #4a1500;mar
   padding:16px 10px;color:#fff;cursor:pointer;animation:pop .25s}
 .card.evo{border-color:#ffd93d;box-shadow:0 0 22px #ffd93d;animation:pop .35s}
 .card.loot{animation:lootpop .5s backwards}
+.card.reject{border-color:#e05252;background:linear-gradient(#4a1f1f,#241014)}
+.card.reject .cname{color:#ff9d9d}
 @keyframes pop{from{transform:scale(.6);opacity:0}}
 @keyframes lootpop{0%{transform:scale(.4) rotate(-8deg);opacity:0}60%{transform:scale(1.12) rotate(3deg)}100%{transform:scale(1)}}
 .cicon{font-size:44px}.cname{font-weight:bold;font-size:16px;margin:6px 0;color:#ffd93d}.cdesc{font-size:13px;color:#cfc4f5}
@@ -85,15 +87,19 @@ h2{font-size:30px;margin-bottom:8px}h3{margin:10px 0 4px;color:#b79bff}
 </div>
 <div id="bossincoming">⚠️ BOSS INCOMING — <span id="bossinsec">10</span>s ⚠️</div>
 <!-- ============ v1.2 HUD ADDITIONS ============ -->
-<button id="statstog" aria-label="Toggle live run stats">📊</button>
+<button id="statstog" aria-label="Build and run stats">📊<span class="bcap">BUILD</span></button>
 <div id="statsover" style="display:none">
   <div class="strow"><span>⚔️ DPS</span><b id="st_dps">0</b></div>
   <div class="strow"><span>💀 Kills/min</span><b id="st_kpm">0</b></div>
   <div class="strow"><span>🪙 Gold/min</span><b id="st_gpm">0</b></div>
   <div class="strow"><span>💎 XP/min</span><b id="st_xpm">0</b></div>
+  <div class="stsec">⚔️ WEAPONS</div>
+  <div id="st_weapons"></div>
+  <div class="stsec">✨ BOOSTS</div>
+  <div id="st_boosts"></div>
 </div>
-<button id="charmbtn" aria-label="Use Moonmoth Charm" style="display:none">🌙<span id="charmn">0</span></button>
-<button id="merchbtn" aria-label="Visit Snagtooth's Cart" style="display:none">🛒<span id="mercht">0</span></button>
+<button id="charmbtn" aria-label="Use Moonmoth Charm: nova blast" style="display:none">🌙<span id="charmn">0</span><span class="bcap">CHARM</span></button>
+<button id="merchbtn" aria-label="Visit Snagtooth's Cart: spend gold mid-run" style="display:none">🛒<span id="mercht">0</span><span class="bcap">SHOP</span></button>
 
 <!-- ============ SETUP SCREEN ============ -->
 <div class="screen" id="setup">
@@ -347,6 +353,10 @@ h2{font-size:30px;margin-bottom:8px}h3{margin:10px 0 4px;color:#b79bff}
 #bossincoming{position:absolute;top:30%;width:100%;text-align:center;font-size:24px;font-weight:bold;
   color:#ff5b5b;text-shadow:0 0 18px #ff0000;display:none;animation:pulse .5s infinite}
 /* --- v1.2 HUD additions --- */
+/* v2.1: always-visible button captions + tracker sections */
+.bcap{display:block;font-size:9px;font-weight:800;opacity:.9;letter-spacing:.4px;line-height:1.1;margin-top:2px}
+.stsec{font-size:11px;font-weight:800;color:#9d7bff;letter-spacing:1px;margin:8px 2px 3px;border-top:1px solid #3a2c55;padding-top:6px}
+#statsover{max-height:70vh;overflow-y:auto}
 #statstog{position:absolute;left:10px;top:64px;pointer-events:auto;width:52px;min-height:52px;border-radius:14px;
   background:rgba(10,8,20,.7);border:2px solid #3a2c55;color:#fff;font-size:22px;cursor:pointer}
 #statsover{position:absolute;left:10px;top:124px;pointer-events:none;background:rgba(10,8,20,.8);
@@ -389,11 +399,11 @@ h2{font-size:30px;margin-bottom:8px}h3{margin:10px 0 4px;color:#b79bff}
   </div>
   <div id="bosswarn">⚠️ COUNT DULLSWORTH APPROACHES ⚠️</div>
   <div id="wicons"></div>
-  <button id="pausebtn">⏸</button>
-  <button id="dashbtn">DASH</button>
+  <button id="pausebtn" aria-label="Pause game">⏸<span class="bcap">PAUSE</span></button>
+  <button id="dashbtn" aria-label="Dash: quick burst of speed">DASH</button>
 <!-- ============ HUD ADDITIONS — paste inside #hud (next to #dashbtn) ============ -->
-<button id="forceboss" aria-label="Summon boss early">
-  <span class="fbicon">👑</span><span class="fblabel">SUMMON<br><span class="fbsub">−50% HP</span></span><span class="fbcd" id="forceboss_cd"></span>
+<button id="forceboss" aria-label="Summon the next boss early. Costs 50% of current HP. 60 second cooldown.">
+  <span class="fbicon">👑</span><span class="fblabel">SUMMON BOSS<br><span class="fbsub">−50% HP · 60s</span></span><span class="fbcd" id="forceboss_cd"></span>
 </button>
 <button id="bookbtn" aria-label="Open Slayer's Field Journal"><span class="fbicon">📖</span><span class="v11lbl">Journal</span></button>
 <div id="hcvignette"></div>
@@ -1409,10 +1419,26 @@ function onBossDown(s, foe) {
 }
 // force-boss button: summon the next wave early at the cost of 50% current HP
 // (skipCost: the UI already applied the HP cost itself)
+// v2.1 summon-bug fix: never charge HP when no boss can spawn.
+function canForceBoss(s){
+  if(!s || !s.waves) return false;
+  if(s.forceCd>0) return false;
+  if(bossAlive(s)) return false;
+  for (const w of s.waves) if(!w.done) return true;
+  return false;
+}
+function flashForceNote(msg){
+  var b=el('forceboss'); if(!b) return;
+  var lb=b.querySelector('.fblabel'); if(!lb) return;
+  if(lb._t) return;
+  var old=lb.innerHTML; lb._t=true; lb.innerHTML='<span style="font-size:11px">'+msg+'</span>';
+  setTimeout(function(){ lb.innerHTML=old; lb._t=false; },1600);
+}
 function forceBoss(s, skipCost) {
   if (s.forceCd > 0 || bossAlive(s)) return false;
   let wv = null;
   for (const w of s.waves) if (!w.done && !w.active) { wv = w; break; }
+  if (!wv) for (const w of s.waves) if (!w.done && w.active) { wv = w; break; } // incoming: accelerate it
   if (!wv) return false;
   if (!skipCost) {
     const cost = Math.ceil(s.hp / 2);
@@ -4082,16 +4108,31 @@ function updateHud(force) {
   el('lowhp').style.opacity = game.hp < game.maxHp * 0.3 ? String(0.5 + 0.3 * Math.sin(game.time * 6)) : '0';
 }
 
+function closeDraft(s) { s.draft = null; s.paused = false; s.tribute = false; show(null); updateHud(true); }
 function openDraftUI() {
   const d = el('draftcards'); d.innerHTML = '';
-  game.draft.forEach((o, i) => {
-    const L = draftLabel(game, o);
-    const b = document.createElement('button');
-    b.className = 'card' + (o.kind === 'evo' ? ' evo' : '');
-    b.innerHTML = '<div class="cicon">' + L.icon + '</div><div class="cname">' + L.name + '</div><div class="cdesc">' + L.desc + '</div>';
-    onTap(b, () => { applyDraft(game, i); show(null); updateHud(true); });
-    d.appendChild(b);
-  });
+  try {
+    game.draft.forEach((o, i) => {
+      const L = draftLabel(game, o);
+      const b = document.createElement('button');
+      b.className = 'card' + (o.kind === 'evo' ? ' evo' : '');
+      b.innerHTML = '<div class="cicon">' + L.icon + '</div><div class="cname">' + L.name + '</div><div class="cdesc">' + L.desc + '</div>';
+      // freeze-hardened: the draft screen must ALWAYS close, even if applyDraft throws
+      onTap(b, () => { try { applyDraft(game, i); } catch (err) { if (typeof console !== 'undefined' && console.error) console.error(err); closeDraft(game); return; } show(null); updateHud(true); });
+      d.appendChild(b);
+    });
+    // REJECT option: skip the pick, take +100 silver instead
+    const r = document.createElement('button');
+    r.className = 'card reject';
+    r.innerHTML = '<div class="cicon">❌</div><div class="cname">Reject</div><div class="cdesc">Skip this pick,<br>take <b>+100 silver</b></div>';
+    onTap(r, () => { try { game.coins += 100; } catch (err) {} closeDraft(game); });
+    d.appendChild(r);
+  } catch (err) {
+    // if card rendering itself fails, never leave the game paused with no UI
+    if (typeof console !== 'undefined' && console.error) console.error(err);
+    closeDraft(game);
+    return;
+  }
   show('draft');
   sfx('levelup');
 }
@@ -4281,6 +4322,7 @@ function frame(t) {
   if (game.over && el('gameover').style.display !== 'flex' && el('victory').style.display !== 'flex') endRun(game.won);
   if (game.saveT <= 0) { game.saveT = 30; saveMeta(localStorage, meta); }
   render(ctx, game, VIEW.w, VIEW.h, decor, dt);
+  if (el('statsover') && el('statsover').style.display !== 'none') renderBuildTracker();
   hudT += dt;
   if (hudT > 0.12 || !game.hudInit) { hudT = 0; game.hudInit = true; updateHud(); }
 }
@@ -5008,13 +5050,36 @@ function showBossIncoming(sec) {
   }, 1000);
 }
 
+/* v2.1: live build tracker — every chosen weapon/boost, always accurate. */
+function renderBuildTracker(){
+  var g = VS && VS.game; if(!g) return;
+  var w = el('st_weapons'), b = el('st_boosts');
+  if(w){
+    var h='';
+    (g.weapons||[]).forEach(function(wp){
+      var W=WEAPONS[wp.id]; if(!W) return;
+      h+='<div class="strow"><span>'+W.icon+' '+W.name+(wp.evo?' ★MAX':'')+'</span><b>Lv '+wp.lvl+'/'+W.max+'</b></div>';
+    });
+    if(w._h!==h){ w.innerHTML=h; w._h=h; }
+  }
+  if(b){
+    var h2='', n=0;
+    Object.keys(g.boosts||{}).forEach(function(id){
+      var B=BOOSTS[id]; if(!B||!g.boosts[id]) return; n++;
+      h2+='<div class="strow"><span>'+B.icon+' '+B.name+'</span><b>×'+g.boosts[id]+'</b></div>';
+    });
+    if(!n) h2='<div class="strow"><span>— none yet —</span><b></b></div>';
+    if(b._h!==h2){ b.innerHTML=h2; b._h=h2; }
+  }
+}
 function wireHudButtons() {
   onTap(el('bookbtn'), function () { openJournal(); });
   onTap(el('forceboss'), function () {
     var now = Date.now();
     if (now < forceCdEnd) return; /* still cooling down */
-    forceCdEnd = now + 60000;
     var g = VS && VS.game;
+    if (!canForceBoss(g)) { flashForceNote('NO BOSS<br>TO SUMMON'); return; }
+    forceCdEnd = now + 60000;
     if (g && typeof g.hp === 'number' && typeof g.maxHp === 'number') {
       g.hp = Math.max(1, Math.floor(g.hp * 0.5)); /* −50% HP cost */
     }
@@ -5027,7 +5092,7 @@ function wireHudButtons() {
   }
   /* v1.2 HUD buttons */
   onTap(el('statstog'), function () {
-    var o = el('statsover'); if (o) o.style.display = o.style.display === 'none' ? 'block' : 'none';
+    var o = el('statsover'); if (o) { o.style.display = o.style.display === 'none' ? 'block' : 'none'; renderBuildTracker(); }
   });
   onTap(el('charmbtn'), function () {
     var g = VS && VS.game;
