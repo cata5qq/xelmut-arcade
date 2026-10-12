@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Can Sequence 🥫</title>
+<style>
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { margin:0; font-family:-apple-system,system-ui,sans-serif; background:#0b0b0d; color:#f2f2f2;
+         display:flex; flex-direction:column; align-items:center; min-height:100vh; padding:20px; }
+  h1 { font-size:1.5rem; margin:8px 0 2px; letter-spacing:1px; }
+  .sub { color:#9a9aa0; font-size:.88rem; margin-bottom:14px; text-align:center; max-width:420px; }
+  #grid { width:min(90vw,400px); aspect-ratio:1/1; display:grid; grid-template-columns:1fr 1fr;
+          gap:14px; }
+  .pad { border-radius:22px; display:flex; align-items:center; justify-content:center;
+         font-size:2.4rem; user-select:none; cursor:pointer; touch-action:manipulation;
+         transition:filter .12s, transform .08s; opacity:.45; }
+  .pad.on { opacity:1; filter:brightness(1.35) drop-shadow(0 0 18px currentColor); }
+  .pad.locked { cursor:default; }
+  #p0 { background:#0f3d0f; color:#37e53c; border:2px solid #1f7a24; }
+  #p1 { background:#123043; color:#7fd6ff; border:2px solid #2f7fae; }
+  #p2 { background:#3d0f12; color:#ff6b74; border:2px solid #a02f37; }
+  #p3 { background:#2a2a30; color:#e8f4f8; border:2px solid #8a8a95; }
+  #hud { margin-top:14px; font-size:1.05rem; color:#cfcfd8; text-align:center; line-height:1.7; }
+  #msg { margin-top:10px; min-height:2.2em; font-size:1.05rem; font-weight:700; text-align:center; max-width:420px; }
+  button { margin-top:10px; background:#00e054; border:none; border-radius:12px; padding:14px 34px;
+           font-size:1.1rem; font-weight:800; cursor:pointer; color:#04120a; }
+  #snd { background:#2a2a30; color:#e8e8ee; padding:10px 20px; font-size:.9rem; }
+  .best { color:#ffd60a; font-weight:800; }
+</style>
+</head>
+<body>
+  <h1>🥫 CAN SEQUENCE</h1>
+  <div class="sub">Mind-training #2. Watch the cans flash. Tap them back in the same order. One longer round each level — how deep does the fridge go?</div>
+  <div id="grid">
+    <div class="pad locked" id="p0">🟢</div>
+    <div class="pad locked" id="p1">🔵</div>
+    <div class="pad locked" id="p2">🔴</div>
+    <div class="pad locked" id="p3">⚪</div>
+  </div>
+  <div id="hud">Level <b id="lvl">1</b> · Streak <b id="str">0</b><br><span id="bestline"></span></div>
+  <div id="msg"></div>
+  <button id="btn" onclick="startGame()">START</button>
+  <button id="snd" onclick="toggleSnd()">🔊 sound: on</button>
+
+<script>
+const pads = [0,1,2,3].map(i => document.getElementById('p' + i));
+const msg = document.getElementById('msg'), lvlEl = document.getElementById('lvl'),
+      strEl = document.getElementById('str'), bestEl = document.getElementById('bestline'),
+      btn = document.getElementById('btn');
+const BEST_KEY = 'canSequenceBest';
+let best = JSON.parse(localStorage.getItem(BEST_KEY) || 'null');
+let seq = [], pos = 0, level = 0, streak = 0, phase = 'idle', sndOn = true, actx = null;
+
+function tone(i) {
+  if (!sndOn) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.frequency.value = [261.6, 329.6, 392.0, 523.3][i];
+    g.gain.setValueAtTime(0.25, actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 0.35);
+    o.connect(g); g.connect(actx.destination);
+    o.start(); o.stop(actx.currentTime + 0.35);
+  } catch (e) {}
+}
+function flash(i, ms) {
+  pads[i].classList.add('on'); tone(i);
+  setTimeout(() => pads[i].classList.remove('on'), ms * 0.75);
+}
+function setBest() {
+  if (best === null) { bestEl.innerHTML = 'All-time best: —'; return; }
+  bestEl.innerHTML = 'All-time best: <span class="best">level ' + best + '</span>';
+}
+setBest();
+
+function toggleSnd() {
+  sndOn = !sndOn;
+  document.getElementById('snd').textContent = sndOn ? '🔊 sound: on' : '🔇 sound: off';
+}
+
+function startGame() {
+  seq = []; pos = 0; level = 0; streak = 0;
+  btn.style.display = 'none'; msg.textContent = '';
+  pads.forEach(p => p.classList.remove('locked'));
+  strEl.textContent = '0'; lvlEl.textContent = '1';
+  nextLevel();
+}
+function nextLevel() {
+  level++; pos = 0; phase = 'show';
+  lvlEl.textContent = level;
+  msg.textContent = '👀 watch…';
+  seq.push(Math.floor(Math.random() * 4));
+  const speed = Math.max(700 - level * 25, 380);
+  let t = 600;
+  seq.forEach(i => {
+    setTimeout(() => flash(i, speed * 0.6), t);
+    t += speed;
+  });
+  setTimeout(() => { phase = 'play'; msg.textContent = '🎯 your turn'; }, t + 120);
+}
+pads.forEach((p, i) => p.addEventListener('pointerdown', () => {
+  if (phase !== 'play') return;
+  flash(i, 260);
+  if (i === seq[pos]) {
+    pos++; streak++; strEl.textContent = streak;
+    if (pos === seq.length) {
+      phase = 'show';
+      msg.textContent = '✅ nailed it — next level';
+      setTimeout(nextLevel, 1100);
+    }
+  } else {
+    gameOver();
+  }
+}));
+
+function gameOver() {
+  phase = 'idle';
+  pads.forEach(p => p.classList.add('locked'));
+  if (best === null || level > best) {
+    best = level; localStorage.setItem(BEST_KEY, best); setBest();
+    msg.innerHTML = '🏆 NEW BEST — level ' + level + '! Hades just sat up. 🐕';
+  } else if (level >= best - 2) {
+    msg.textContent = '🐾 Level ' + level + '. So close to your best (' + best + ') — Lilith believes in you.';
+  } else if (level >= 8) {
+    msg.textContent = '🧠 Level ' + level + '. Solid brain workout. Crack a White and try again?';
+  } else {
+    msg.textContent = '🥫 Fumbled at level ' + level + '. Even champions drop a can. Retry?';
+  }
+  btn.textContent = 'PLAY AGAIN'; btn.style.display = '';
+}
+</script>
+</body>
+</html>
