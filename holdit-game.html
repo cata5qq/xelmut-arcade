@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hold It! — Mind Trainer #9</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:#0b0e12;color:#e8edf2;font-family:-apple-system,system-ui,Segoe UI,Roboto,sans-serif;display:flex;flex-direction:column;align-items:center;min-height:100vh;padding:14px}
+h1{font-size:22px;margin:8px 0 2px}
+.sub{color:#9aa6b2;font-size:13px;margin-bottom:10px;text-align:center;max-width:420px}
+.hud{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;justify-content:center}
+.hud div{background:#141a21;border:1px solid #232d38;border-radius:10px;padding:6px 12px;font-size:14px}
+.hud b{color:#7df9ff}
+.stage{width:min(92vw,380px);height:260px;background:#10151b;border:2px solid #232d38;border-radius:18px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.can{font-size:96px;line-height:1;filter:drop-shadow(0 6px 12px rgba(0,0,0,.5))}
+.msg{position:absolute;bottom:10px;left:0;right:0;text-align:center;font-size:15px;color:#9aa6b2}
+.flash{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .12s}
+.flash.hit{background:radial-gradient(circle,rgba(80,255,140,.35),transparent 70%)}
+.flash.fa{background:radial-gradient(circle,rgba(255,80,80,.45),transparent 70%)}
+.flash.on{opacity:1}
+.bar{width:min(92vw,380px);height:8px;background:#1a212a;border-radius:6px;margin-top:10px;overflow:hidden}
+.bar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#7df9ff,#4aa8ff);transition:width .1s linear}
+button{background:#7df9ff;color:#06232a;border:0;border-radius:12px;padding:12px 26px;font-size:17px;font-weight:700;margin-top:14px;cursor:pointer}
+button.ghost{background:#1a212a;color:#e8edf2;border:1px solid #2c3947}
+.panel{width:min(92vw,420px);background:#10151b;border:1px solid #232d38;border-radius:14px;padding:14px;margin-top:14px;font-size:14px}
+.panel h3{margin:0 0 8px;font-size:15px;color:#7df9ff}
+.verdict{font-size:14px;color:#c8d2dc;margin-top:8px}
+.legend{display:flex;gap:14px;justify-content:center;font-size:14px;color:#9aa6b2;margin-top:6px}
+</style>
+</head>
+<body>
+<h1>🛑 Hold It! <span style="color:#7df9ff">#9</span></h1>
+<div class="sub">Mind-training series — go/no-go inhibition drill.<br>Tap the <b>white can</b> ⚡ fast. <b>DO NOT tap</b> the black can.</div>
+<div class="hud">
+<div>Level <b id="hL">1</b></div>
+<div>❤️ <b id="hH">3</b></div>
+<div>Score <b id="hS">0</b></div>
+<div>Best <b id="hB">0</b></div>
+</div>
+<div class="stage" id="stage">
+<div class="flash hit" id="fHit"></div>
+<div class="flash fa" id="fFa"></div>
+<div class="can" id="can"></div>
+<div class="msg" id="msg">tap START when ready</div>
+</div>
+<div class="bar"><i id="tfill"></i></div>
+<div class="legend"><span>⚡ TAP = white can</span><span>✋ HOLD = black can</span></div>
+<button id="startBtn">START</button>
+<button id="againBtn" class="ghost" style="display:none">PLAY AGAIN</button>
+<div class="panel" id="over" style="display:none">
+<h3>Round over</h3>
+<div id="stats"></div>
+<div class="verdict" id="verdict"></div>
+</div>
+<div class="panel">
+<h3>How it works</h3>
+<div style="font-size:13px;color:#9aa6b2;line-height:1.5">
+Each level: 24 cans flash, one at a time. <b>Tap</b> every white can ⚡ for +10 (+streak bonus).
+<b>Hold still</b> on black cans ⚫ — tapping one costs a ❤️. Missing a white can costs a ❤️ too.
+Higher levels = faster cans, more black cans. 3 misses/fumbles and the run ends.</div>
+</div>
+<script>
+"use strict";
+/* iOS-hardened tap binding — pointerup-first + click fallback (150ms gesture guard), 10px scroll-drag slop */
+function onTap(el, fn){
+  if(!el||typeof el.addEventListener!=="function")return;
+  var lastFire=0,dx0=0,dy0=0;
+  function fire(e){lastFire=Date.now();fn(e);}
+  el.addEventListener("pointerdown",function(e){dx0=e.clientX||0;dy0=e.clientY||0;});
+  el.addEventListener("pointerup",function(e){
+    var dx=(e.clientX||0)-dx0,dy=(e.clientY||0)-dy0;
+    if(dx*dx+dy*dy>100)return;
+    fire(e);
+  });
+  el.addEventListener("click",function(e){
+    if(Date.now()-lastFire<150)return; /* same gesture's duplicate */
+    fire(e);
+  });
+}
+var MAX_LIVES=3, TRIALS=24;
+var DUR=[900,750,620,520,440,380];        /* ms stimulus per level */
+var NOGO=[0.22,0.28,0.33,0.38,0.42,0.46]; /* black-can probability per level */
+var G=null, timers=[];
+function $(id){return document.getElementById(id);}
+function clearT(){timers.forEach(clearTimeout);timers=[];}
+function setHud(){
+  $("hL").textContent=G?G.level:1;
+  $("hH").textContent=G?G.lives:MAX_LIVES;
+  $("hS").textContent=G?G.score:0;
+  $("hB").textContent=loadBest();
+}
+function loadBest(){try{return parseInt(localStorage.getItem("holdit_best")||"0",10)||0;}catch(e){return 0;}}
+function saveBest(s){if(s>loadBest()){try{localStorage.setItem("holdit_best",""+s);}catch(e){}}}
+function flash(which){
+  var el=$(which==="hit"?"fHit":"fFa");
+  el.classList.add("on");setTimeout(function(){el.classList.remove("on");},130);
+}
+function verdictFor(score,acc){
+  var v=[];
+  if(score>=420){v.push("🐺 Hades: laser focus. The couch remains un-tapped.");v.push("🐾 Lilith: she blinked twice. That's her five-star review.");}
+  else if(score>=260){v.push("🐺 Hades: decent restraint. You only embarrassed yourself twice.");v.push("🐾 Lilith: she brought you the ball mid-game. You didn't drop it.");}
+  else if(score>=140){v.push("🐺 Hades: your paw had opinions. Some were wrong.");v.push("🐾 Lilith: she watched you tap a black can and judged quietly.");}
+  else{v.push("🐺 Hades: every black can got booped. Every single one.");v.push("🐾 Lilith: she sat on the remote. An upgrade.");}
+  return v.join("<br>");
+}
+function newGame(){
+  clearT();G=null;
+  $("can").textContent="";$("msg").textContent="tap START when ready";
+  $("tfill").style.width="100%";$("over").style.display="none";
+  $("againBtn").style.display="none";$("startBtn").style.display="";
+  setHud();
+}
+function start(){
+  clearT();
+  $("startBtn").style.display="none";$("againBtn").style.display="none";$("over").style.display="none";
+  G={level:1,lives:MAX_LIVES,score:0,streak:0,ti:0,trials:[],hits:0,fas:0,misses:0,rt:[],cur:null};
+  setHud();runLevel();
+}
+function lvlCfg(l){
+  var i=Math.min(l-1,DUR.length-1);
+  return {dur:DUR[i],nogo:NOGO[i]};
+}
+function runLevel(){
+  if(!G)return;
+  if(G.lives<=0){return gameOver();}
+  G.ti=0;G.trials=[];G.streak=0;
+  $("msg").textContent="Level "+G.level+" — tap WHITE, hold BLACK";
+  setHud();nextTrial();
+}
+function nextTrial(){
+  if(!G||G.lives<=0)return;
+  var cfg=lvlCfg(G.level);
+  if(G.ti>=TRIALS){
+    G.level++;runLevel();return;
+  }
+  var isGo=Math.random()>cfg.nogo;
+  G.ti++;
+  G.cur={isGo:isGo,answered:false,t0:Date.now()};
+  $("can").textContent=isGo?"⚡":"⚫";
+  $("msg").textContent=isGo?"TAP!":"…";
+  timers.push(setTimeout(function(){onStimulusEnd();},cfg.dur));
+}
+function onStimulusEnd(){
+  if(!G||!G.cur)return;
+  var c=G.cur;G.cur=null;
+  if(c.isGo){
+    if(!c.answered){
+      /* miss */
+      G.misses++;G.streak=0;loseLife("Missed a white can!");
+    }
+  }
+  $("can").textContent="";$("msg").textContent="";
+  if(G.lives>0){timers.push(setTimeout(nextTrial,180));}
+  else{gameOver();}
+}
+function loseLife(why){
+  G.lives--;flash("fa");setHud();
+  $("msg").textContent="❌ "+why;
+}
+function onStageTap(){
+  if(!G||!G.cur||G.cur.answered)return;
+  var c=G.cur;c.answered=true;
+  clearT();
+  var rt=Date.now()-c.t0;G.rt.push(rt);
+  if(c.isGo){
+    G.hits++;G.streak++;
+    var pts=10+Math.min(G.streak-1,8)*2;
+    G.score+=pts;flash("hit");
+    $("msg").textContent="+"+pts+" ⚡";
+  }else{
+    G.fas++;G.streak=0;
+    flash("fa");G.lives--;
+    $("msg").textContent="❌ Black can! Fumble "+G.fas;
+  }
+  setHud();
+  if(G.lives<=0){timers.push(setTimeout(gameOver,350));return;}
+  /* freeze remaining stimulus time out — move to gap */
+  timers.push(setTimeout(function(){
+    $("can").textContent="";
+    if(G.lives>0){timers.push(setTimeout(nextTrial,180));}
+    else{gameOver();}
+  },120));
+}
+function gameOver(){
+  clearT();G.cur=null;
+  $("can").textContent="🏁";
+  var n=G.hits+G.misses+G.fas, acc=n?Math.round(100*G.hits/n):0;
+  var avgRt=G.rt.length?Math.round(G.rt.reduce(function(a,b){return a+b;},0)/G.rt.length):0;
+  saveBest(G.score);
+  $("stats").innerHTML=
+    "Score <b>"+G.score+"</b> · Level reached <b>"+G.level+"</b><br>"+
+    "Hits "+G.hits+" · Fumbles "+G.fas+" · Misses "+G.misses+"<br>"+
+    "Accuracy "+acc+"% · Avg reaction "+avgRt+"ms · Best "+loadBest();
+  $("verdict").innerHTML=verdictFor(G.score,acc);
+  $("over").style.display="";$("againBtn").style.display="";setHud();
+}
+onTap($("stage"),onStageTap);
+onTap($("startBtn"),start);
+onTap($("againBtn"),start);
+setHud();
+/* debug/testing API */
+window.__holdit=function(){
+  return {lives:G?G.lives:null,level:G?G.level:null,score:G?G.score:null,
+    ti:G?G.ti:null,cur:G&&G.cur?{isGo:G.cur.isGo,answered:G.cur.answered}:null,
+    canText:$("can").textContent,msg:$("msg").textContent};
+};
+</script>
+</body>
+</html>
