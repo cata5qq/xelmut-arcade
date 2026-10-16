@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Tower Mind — mind-training #10</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin:0; padding:0; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #101418; color: #f2f4f6; touch-action: manipulation;
+    display:flex; justify-content:center; min-height:100vh;
+  }
+  #wrap { width:100%; max-width:480px; padding:14px 14px 28px; }
+  h1 { font-size:22px; margin:6px 0 2px; text-align:center; letter-spacing:.5px; }
+  .sub { text-align:center; color:#9aa4ad; font-size:12px; margin-bottom:10px; }
+  #hud { display:flex; gap:8px; justify-content:center; margin:8px 0 10px; flex-wrap:wrap; }
+  .pill { background:#1c232b; border:1px solid #2c3640; border-radius:999px;
+          padding:6px 12px; font-size:13px; white-space:nowrap; }
+  .pill b { color:#ffd34d; }
+  #dots { text-align:center; margin:2px 0 8px; font-size:18px; letter-spacing:4px; }
+  #targetBox { background:#161c22; border:1px dashed #3a4653; border-radius:12px;
+               padding:8px 6px 4px; margin-bottom:10px; }
+  #targetBox .tlabel { text-align:center; font-size:11px; color:#9aa4ad;
+                       text-transform:uppercase; letter-spacing:2px; margin-bottom:4px; }
+  .pegrow { display:flex; justify-content:space-around; align-items:flex-end; }
+  .peg { position:relative; width:30%; min-width:96px; display:flex; flex-direction:column;
+         align-items:center; justify-content:flex-end; cursor:pointer; border-radius:12px;
+         padding:6px 2px 0; }
+  .peg .rod { position:absolute; bottom:14px; width:8px; border-radius:4px;
+              background:linear-gradient(#5a6672,#39424c); z-index:0; }
+  .peg .base { width:88%; height:12px; border-radius:6px; background:#2c3640; z-index:2; margin-top:2px;}
+  .stack { display:flex; flex-direction:column-reverse; align-items:center; z-index:1;
+           min-height:20px; width:100%; }
+  .can { width:74%; max-width:92px; height:34px; border-radius:8px; margin:2px 0;
+         display:flex; align-items:center; justify-content:center;
+         font-weight:800; font-size:12px; letter-spacing:1px; color:#0c0f12;
+         box-shadow: inset 0 -4px 6px rgba(0,0,0,.25), 0 2px 4px rgba(0,0,0,.4);
+         transition: transform .12s ease, box-shadow .12s ease; }
+  .can.g { background:linear-gradient(#7ee787,#2f9e4f); }
+  .can.b { background:linear-gradient(#7cc7ff,#1f7fd1); }
+  .can.w { background:linear-gradient(#ffffff,#c9ced4); }
+  .can.sel { transform: translateY(-8px) scale(1.06);
+             box-shadow:0 0 0 3px #ffd34d, 0 6px 14px rgba(255,211,77,.35); }
+  #play .peg { min-height:230px; background:#141a20; border:1px solid #232c35; }
+  #play .peg:active { background:#1a222b; }
+  #play .rod { height:150px; }
+  #targetBox .peg { min-height:96px; cursor:default; }
+  #targetBox .rod { height:64px; }
+  #targetBox .can { height:22px; font-size:9px; width:80%; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-7px)}
+                     50%{transform:translateX(7px)} 75%{transform:translateX(-4px)} }
+  .peg.shake { animation: shake .3s ease; }
+  #hint { min-height:22px; text-align:center; color:#ffb3b3; font-size:13px; margin:6px 0; }
+  #btns { display:flex; gap:10px; justify-content:center; margin:8px 0 4px; flex-wrap:wrap; }
+  button { font-family:inherit; font-size:15px; font-weight:700; color:#101418;
+           background:#ffd34d; border:none; border-radius:12px; padding:12px 18px;
+           min-width:96px; cursor:pointer; }
+  button.ghost { background:#232c35; color:#f2f4f6; border:1px solid #39434e; }
+  button:active { transform:scale(.96); }
+  .overlay { position:fixed; inset:0; background:rgba(8,10,13,.92); display:flex;
+             align-items:center; justify-content:center; z-index:50; padding:20px; }
+  .card { background:#161c22; border:1px solid #2c3640; border-radius:16px; padding:24px;
+          max-width:400px; width:100%; text-align:center; }
+  .card h2 { margin:0 0 8px; font-size:24px; }
+  .card p { color:#b9c2cb; font-size:14px; line-height:1.55; }
+  .card .row { display:flex; gap:10px; justify-content:center; margin-top:16px; flex-wrap:wrap; }
+  .stars { font-size:40px; letter-spacing:6px; margin:6px 0; }
+  .stars .off { color:#3a434d; }
+  .stars .on { color:#ffd34d; }
+  #verdict { margin-top:12px; font-size:14px; color:#ffd34d; line-height:1.5; min-height:44px;}
+  .hidden { display:none !important; }
+  kbd { background:#232c35; border-radius:6px; padding:1px 7px; font-size:12px; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <h1>🗼 Tower Mind</h1>
+  <div class="sub">mind-training #10 · plan the stack, move the cans</div>
+  <div id="hud">
+    <span class="pill">Level <b id="hL">1</b>/6</span>
+    <span class="pill">Moves <b id="hM">0</b> <span style="color:#9aa4ad">(par <span id="hP">–</span>)</span></span>
+    <span class="pill">Score <b id="hS">0</b></span>
+    <span class="pill">Best <b id="hB">0</b></span>
+  </div>
+  <div id="dots"></div>
+  <div id="targetBox">
+    <div class="tlabel">🎯 Match this</div>
+    <div class="pegrow" id="target"></div>
+  </div>
+  <div class="pegrow" id="play"></div>
+  <div id="hint"></div>
+  <div id="btns">
+    <button id="undoBtn" class="ghost">↩ Undo</button>
+    <button id="resetBtn" class="ghost">🔄 Reset</button>
+    <button id="soundBtn" class="ghost">🔊</button>
+  </div>
+  <div id="verdict"></div>
+</div>
+
+<div class="overlay" id="startOv">
+  <div class="card">
+    <h2>🗼 Tower Mind</h2>
+    <p>Stack the Monster cans to match the <b>target</b>.<br><br>
+    Tap a peg to <b>pick up</b> its top can, then tap another peg to <b>drop</b> it.<br>
+    Pegs hold <b>3 · 2 · 1</b> cans — plan ahead, the small peg only takes one!<br><br>
+    Solve in as few moves as you can. <b>Par</b> grows from 2 to 7 moves across 6 levels.</p>
+    <div class="row"><button id="startBtn">▶ Start</button></div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="winOv">
+  <div class="card">
+    <h2 id="winTitle">Level clear!</h2>
+    <div class="stars" id="winStars"></div>
+    <p id="winStats"></p>
+    <div class="row">
+      <button id="replayBtn" class="ghost">↻ Replay</button>
+      <button id="nextBtn">Next ▶</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="endOv">
+  <div class="card">
+    <h2>🏁 Tower complete!</h2>
+    <div class="stars" id="endStars"></div>
+    <p id="endStats"></p>
+    <p id="endVerdict" style="color:#ffd34d"></p>
+    <div class="row"><button id="againBtn">▶ Play again</button></div>
+  </div>
+</div>
+
+<script>
+/* ================= PURE-LOGIC (node-testable; no DOM below this marker) ================= */
+var CAP = [3, 2, 1]; /* peg capacities: tall, medium, small */
+var CAN_LABEL = { g: 'OG', b: 'ULTRA', w: 'WHITE' };
+/* start/target arrays are bottom->top. Pars BFS-verified by tower-mind-puzzles.js */
+var LEVELS = [
+  { par: 2, start: [['g','b','w'],[],[]],            target: [['g'],['w','b'],[]] },
+  { par: 3, start: [['g','b','w'],[],[]],            target: [[],['w','b'],['g']] },
+  { par: 4, start: [['g','b','w'],[],[]],            target: [['b'],['w'],['g']] },
+  { par: 5, start: [['g','b','w'],[],[]],            target: [['b','w'],[],['g']] },
+  { par: 6, start: [['g','b','w'],[],[]],            target: [['b','w','g'],[],[]] },
+  { par: 7, start: [['g','b','w'],[],[]],            target: [['b'],['g','w'],[]] }
+];
+function keyOf(pegs){ return pegs.map(function(p){return p.join('');}).join('|'); }
+function clonePegs(p){ return p.map(function(x){return x.slice();}); }
+function sameState(a,b){ return keyOf(a)===keyOf(b); }
+function canMove(pegs,f,t){
+  if(f===t) return false;
+  if(pegs[f].length===0) return false;
+  if(pegs[t].length>=CAP[t]) return false;
+  return true;
+}
+function applyMove(pegs,f,t){ /* returns new state, or null if illegal */
+  if(!canMove(pegs,f,t)) return null;
+  var p=clonePegs(pegs); p[t].push(p[f].pop()); return p;
+}
+function legalMoves(pegs){
+  var ms=[],f,t;
+  for(f=0;f<3;f++) for(t=0;t<3;t++) if(canMove(pegs,f,t)) ms.push([f,t]);
+  return ms;
+}
+function bfsDist(start,target){ /* shortest moves start->target, -1 if unreachable */
+  var sk=keyOf(start), tk=keyOf(target);
+  if(sk===tk) return 0;
+  var seen={}, q=[start], head=0, dist={};
+  seen[sk]=true; dist[sk]=0;
+  while(head<q.length){
+    var cur=q[head++], cd=dist[keyOf(cur)], ms=legalMoves(cur), i, nxt, nk;
+    for(i=0;i<ms.length;i++){
+      nxt=applyMove(cur,ms[i][0],ms[i][1]); nk=keyOf(nxt);
+      if(!(nk in seen)){ seen[nk]=true; dist[nk]=cd+1; if(nk===tk) return cd+1; q.push(nxt); }
+    }
+  }
+  return -1;
+}
+function starsFor(moves,par){ return moves<=par?3:(moves<=par+2?2:1); }
+function levelScore(moves,par){
+  var s=starsFor(moves,par)*100-Math.max(0,moves-par)*15;
+  return Math.max(25,s);
+}
+function verdictFor(total){
+  if(total>=1500) return '🏆 Tower Master! Hades did the full zoomies. Lilith has officially appointed you pack genius.';
+  if(total>=1100) return '🌟 Sharp planner! Hades is impressed (he just knocked a can over anyway). Lilith wants a rematch.';
+  if(total>=600)  return '👍 Solid stacking. Hades sniffed your tower approvingly. Lilith says the small peg is tricky for everyone.';
+  return '🐾 Good effort! Hades knocked the tower over and ate a can. Planning is a muscle — run it back!';
+}
+/* ================= PURE-END (DOM game below) ================= */
+
+var BEST_KEY='towerMindBestV1';
+function loadBest(){ try{ return JSON.parse(localStorage.getItem(BEST_KEY)||'{"score":0}').score||0; }catch(e){ return 0; } }
+function saveBest(s){ try{ localStorage.setItem(BEST_KEY, JSON.stringify({score:s})); }catch(e){} }
+
+/* iOS-hardened tap binding (refined 14 Oct 2026): pointerup-first + click
+ * fallback; 150ms guard drops only the same-gesture synthetic click;
+ * 10px slop ignores scroll-drags. Bare addEventListener('click') is banned. */
+function onTap(el, fn) {
+  if (!el || typeof el.addEventListener !== 'function') return;
+  var lastFire = 0, dx0 = 0, dy0 = 0;
+  function fire(e) { lastFire = Date.now(); fn(e); }
+  el.addEventListener('pointerdown', function (e) { dx0 = e.clientX || 0; dy0 = e.clientY || 0; });
+  el.addEventListener('pointerup', function (e) {
+    var dx = (e.clientX || 0) - dx0, dy = (e.clientY || 0) - dy0;
+    if (dx * dx + dy * dy > 100) return;
+    fire(e);
+  });
+  el.addEventListener('click', function (e) {
+    if (Date.now() - lastFire < 150) return;
+    fire(e);
+  });
+}
+
+var G=null, soundOn=true, AC=null;
+function $(id){ return document.getElementById(id); }
+function beep(f,d,type){
+  if(!soundOn) return;
+  try{
+    AC = AC || new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==='suspended') AC.resume();
+    var o=AC.createOscillator(), g=AC.createGain();
+    o.type=type||'sine'; o.frequency.value=f;
+    g.gain.setValueAtTime(0.12, AC.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, AC.currentTime+d);
+    o.connect(g); g.connect(AC.destination);
+    o.start(); o.stop(AC.currentTime+d);
+  }catch(e){}
+}
+function say(t){ $('hint').textContent=t||''; }
+
+function buildPegs(container, interactive){
+  container.innerHTML='';
+  var els=[], i, peg, rod, base, stack;
+  for(i=0;i<3;i++){
+    peg=document.createElement('div'); peg.className='peg'; peg.setAttribute('data-p',i);
+    rod=document.createElement('div'); rod.className='rod'; peg.appendChild(rod);
+    stack=document.createElement('div'); stack.className='stack'; peg.appendChild(stack);
+    base=document.createElement('div'); base.className='base'; peg.appendChild(base);
+    (function(idx, el){
+      if(interactive) onTap(el, function(){ onPegTap(idx); });
+    })(i, peg);
+    container.appendChild(peg); els.push({peg:peg, stack:stack});
+  }
+  return els;
+}
+var playEls=null, targetEls=null;
+
+function renderStack(els, pegs, selIdx){
+  var i, j, can;
+  for(i=0;i<3;i++){
+    els[i].stack.innerHTML='';
+    for(j=0;j<pegs[i].length;j++){
+      can=document.createElement('div');
+      can.className='can '+pegs[i][j]+(selIdx===i&&j===pegs[i].length-1?' sel':'');
+      can.textContent=CAN_LABEL[pegs[i][j]];
+      els[i].stack.appendChild(can);
+    }
+  }
+}
+function renderDots(){
+  var d='', i;
+  for(i=0;i<LEVELS.length;i++) d += i<G.level ? '🟢' : (i===G.level ? '🟡' : '⚪');
+  $('dots').textContent=d;
+}
+function render(){
+  renderStack(playEls, G.pegs, G.sel);
+  $('hL').textContent=G.level+1;
+  $('hM').textContent=G.moves;
+  $('hP').textContent=G.par;
+  $('hS').textContent=G.score;
+  $('hB').textContent=Math.max(loadBest(), G.score);
+  renderDots();
+}
+function shakePeg(i){ playEls[i].peg.classList.remove('shake'); void playEls[i].peg.offsetWidth; playEls[i].peg.classList.add('shake'); }
+
+function startLevel(li){
+  var L=LEVELS[li];
+  G={ level:li, pegs:clonePegs(L.start), par:L.par, moves:0, sel:-1,
+      history:[], score:G?G.score:0 };
+  renderStack(targetEls, L.target, -1);
+  say(''); render();
+}
+function onPegTap(i){
+  if(!G || !$('winOv').classList.contains('hidden')) return;
+  if(G.sel===-1){
+    if(G.pegs[i].length===0){ say('Nothing on that peg — pick one with cans.'); beep(160,.12,'square'); return; }
+    G.sel=i; beep(500,.07); say('Can picked up — now tap a peg to drop it.'); render(); return;
+  }
+  if(G.sel===i){ G.sel=-1; say(''); render(); return; }
+  var nxt=applyMove(G.pegs, G.sel, i);
+  if(!nxt){
+    shakePeg(i);
+    say(G.pegs[i].length>=CAP[i] ? "That peg is full — the small one only takes a single can!" : "Can't move there.");
+    beep(160,.15,'square'); return;
+  }
+  G.history.push({f:G.sel, t:i});
+  G.pegs=nxt; G.moves++; G.sel=-1; beep(700,.08); say('');
+  render();
+  if(sameState(G.pegs, LEVELS[G.level].target)) winLevel();
+}
+function undo(){
+  if(!G || !G.history.length){ say('Nothing to undo.'); return; }
+  var m=G.history.pop();
+  G.pegs=applyMove(G.pegs, m.t, m.f); /* reverse is always legal */
+  G.moves=Math.max(0,G.moves-1); G.sel=-1; beep(420,.07); say('Undone.'); render();
+}
+function winLevel(){
+  var L=LEVELS[G.level], st=starsFor(G.moves,L.par), sc=levelScore(G.moves,L.par);
+  G.score+=sc;
+  var stars=''; for(var i=0;i<3;i++) stars+='<span class="'+(i<st?'on':'off')+'">★</span>';
+  $('winTitle').textContent = G.level===LEVELS.length-1 ? 'Final tower built!' : 'Level '+(G.level+1)+' clear!';
+  $('winStars').innerHTML=stars;
+  $('winStats').innerHTML='Solved in <b>'+G.moves+'</b> moves (par '+L.par+') · <b>+'+sc+'</b> pts<br>Total score: <b>'+G.score+'</b>';
+  $('nextBtn').textContent = G.level===LEVELS.length-1 ? '🏁 Finish' : 'Next ▶';
+  var j; beep(660,.1); setTimeout(function(){beep(880,.12);},110); setTimeout(function(){beep(1174,.16);},230);
+  for(j=0;j<3;j++) (function(k){ setTimeout(function(){ $('verdict').textContent=''; }, 1); })(j);
+  render();
+  if(G.score>loadBest()) saveBest(G.score);
+  setTimeout(function(){ $('winOv').classList.remove('hidden'); }, 350);
+}
+function nextLevel(){
+  $('winOv').classList.add('hidden');
+  if(G.level===LEVELS.length-1){ endGame(); return; }
+  startLevel(G.level+1);
+}
+function endGame(){
+  var max=LEVELS.length*300, avg=G.score/LEVELS.length, st=avg>=250?3:(avg>=180?2:1);
+  var stars=''; for(var i=0;i<3;i++) stars+='<span class="'+(i<st?'on':'off')+'">★</span>';
+  $('endStars').innerHTML=stars;
+  $('endStats').innerHTML='Final score: <b>'+G.score+'</b> / '+max;
+  $('endVerdict').textContent=verdictFor(G.score);
+  $('verdict').textContent=verdictFor(G.score);
+  $('endOv').classList.remove('hidden');
+}
+function newGame(){
+  G=null;
+  $('winOv').classList.add('hidden'); $('endOv').classList.add('hidden');
+  $('verdict').textContent='';
+  startLevel(0);
+}
+
+/* self-check: every level's par must equal the true shortest path */
+(function(){
+  var bad=[], i, d;
+  for(i=0;i<LEVELS.length;i++){
+    d=bfsDist(LEVELS[i].start, LEVELS[i].target);
+    if(d!==LEVELS[i].par) bad.push(i+':par='+LEVELS[i].par+',true='+d);
+  }
+  if(bad.length && window.console) console.error('TOWER-MIND PAR MISMATCH: '+bad.join('; '));
+})();
+
+playEls=buildPegs($('play'), true);
+targetEls=buildPegs($('target'), false);
+onTap($('startBtn'), function(){ $('startOv').classList.add('hidden'); newGame(); });
+onTap($('againBtn'), newGame);
+onTap($('nextBtn'), nextLevel);
+onTap($('replayBtn'), function(){ $('winOv').classList.add('hidden'); startLevel(G.level); });
+onTap($('undoBtn'), undo);
+onTap($('resetBtn'), function(){ if(G) startLevel(G.level); });
+onTap($('soundBtn'), function(){ soundOn=!soundOn; $('soundBtn').textContent=soundOn?'🔊':'🔇'; if(soundOn) beep(600,.07); });
+$('hB').textContent=loadBest();
+</script>
+</body>
+</html>

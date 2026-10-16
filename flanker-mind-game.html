@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Flanker Mind — mind-training #11</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:#0b0f1a;color:#e8ecff;font-family:-apple-system,system-ui,Segoe UI,Roboto,sans-serif;touch-action:manipulation}
+.wrap{max-width:460px;margin:0 auto;padding:16px 14px 32px}
+h1{font-size:22px;margin:4px 0 2px;color:#7CFC98;text-align:center}
+.sub{font-size:12px;color:#8b93b8;text-align:center;margin-bottom:10px}
+.hud{display:flex;gap:8px;justify-content:center;margin:10px 0;flex-wrap:wrap}
+.hud div{background:#151b2e;border:1px solid #2a3358;border-radius:10px;padding:6px 12px;font-size:13px}
+.hud b{color:#7CFC98}
+.arena{background:#11162a;border:2px solid #2a3358;border-radius:18px;padding:34px 10px 26px;margin:12px 0;text-align:center;position:relative;transition:border-color .15s}
+.arena.good{border-color:#38d957}
+.arena.bad{border-color:#ff4d5e}
+#arrows{font-size:52px;letter-spacing:8px;line-height:1.2;user-select:none;-webkit-user-select:none}
+#arrows .flank{opacity:.45}
+#arrows .mid{color:#7CFC98;text-shadow:0 0 14px rgba(124,252,152,.6);border-bottom:4px solid #7CFC98}
+.trialnote{font-size:12px;color:#8b93b8;margin-top:10px}
+#timebarwrap{height:8px;background:#1b2240;border-radius:6px;margin:14px 4px 0;overflow:hidden}
+#timebar{height:100%;width:100%;background:linear-gradient(90deg,#7CFC98,#ffd23f);border-radius:6px}
+.btns{display:flex;gap:14px;margin-top:16px}
+.bigbtn{flex:1;background:#1d2745;border:2px solid #3a4678;color:#fff;font-size:44px;border-radius:18px;padding:26px 0;cursor:pointer;user-select:none;-webkit-user-select:none}
+.bigbtn:active{background:#2a3560;transform:scale(.97)}
+.bigbtn .lbl{display:block;font-size:13px;letter-spacing:3px;margin-top:6px;color:#9aa3cf}
+#verdict{color:#b79bff;font-style:italic;margin-top:14px;text-align:center;max-width:420px;min-height:44px;font-size:15px}
+.card{background:#11162a;border:1px solid #2a3358;border-radius:14px;padding:14px;margin:12px 0;font-size:14px;line-height:1.5}
+.card b{color:#7CFC98}
+.startbtn,.againbtn{display:block;width:100%;background:#7CFC98;color:#06220f;border:none;font-size:18px;font-weight:700;border-radius:14px;padding:16px;margin-top:12px;cursor:pointer}
+.startbtn:active,.againbtn:active{transform:scale(.98)}
+#gameover{display:none}
+.score{font-size:16px;text-align:center;margin:8px 0}
+.score b{color:#ffd23f;font-size:26px}
+.foot{font-size:11px;color:#5b648a;text-align:center;margin-top:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>⚡ Flanker Mind</h1>
+<div class="sub">mind-training #11 — the interference buster</div>
+<div class="hud">
+<div>Level <b id="hL">–</b></div>
+<div>❤️ <b id="hH">–</b></div>
+<div>Score <b id="hS">0</b></div>
+<div>Best <b id="hB">0</b></div>
+</div>
+
+<div id="howto" class="card">
+<b>HOW TO PLAY</b><br>
+A row of arrows flashes up. <b>Only the MIDDLE one matters</b> — the green
+underlined arrow. The ones around it will try to trick you.<br><br>
+Tap <b>◀ LEFT</b> or <b>RIGHT ▶</b> for the <b>center arrow's</b> direction,
+before the timer bar runs out. 12 trials per level, the bar gets faster
+every level. 3 ❤️ — a wrong tap or a timeout costs one.<br><br>
+Streak bonus: consecutive hits on trick (mixed-direction) rows score extra.
+<div class="startbtn" id="startBtn" role="button">START</div>
+</div>
+
+<div id="game" style="display:none">
+<div class="arena" id="arena">
+<div id="arrows"></div>
+<div class="trialnote">tap the <b style="color:#7CFC98">center</b> arrow's direction</div>
+<div id="timebarwrap"><div id="timebar"></div></div>
+</div>
+<div class="btns">
+<div class="bigbtn" id="btnL" role="button">◀<span class="lbl">LEFT</span></div>
+<div class="bigbtn" id="btnR" role="button">▶<span class="lbl">RIGHT</span></div>
+</div>
+</div>
+
+<div id="gameover" class="card">
+<div class="score">Final score: <b id="finalS">0</b></div>
+<div class="score" style="font-size:13px">Level reached: <b id="finalL">1</b> · Best: <b id="finalB">0</b></div>
+<div class="againbtn" id="againBtn" role="button">PLAY AGAIN</div>
+</div>
+
+<div id="verdict">Hades &amp; Lilith are staring at the arrows, waiting for the game to start.</div>
+<div class="foot">mind-training series #11 · best saved on this device · made for Xelmut ⚡</div>
+</div>
+
+<script>
+'use strict';
+/* CORE-START: pure logic, unit-testable */
+var TRIALS_PER_LEVEL=12, MAX_LIVES=3, BASE_MS=1500, STEP_MS=60, MIN_MS=600, INCONG_P=0.6;
+function levelMs(level){ return Math.max(MIN_MS, BASE_MS-(level-1)*STEP_MS); }
+function pickDir(r){ return r()<0.5 ? 'L' : 'R'; }
+function pickIncong(r){ return r()<INCONG_P; }
+function trialScore(streak, incong){ return 10 + (incong ? Math.min(streak,10)*2 : 0); }
+function verdictFor(score, level){
+  if(score<60) return 'Hades sniffed the arrows and lay back down. Lilith says ignore the crowd, human — eyes on the middle one.';
+  if(score<160) return 'Lilith bopped the screen mid-streak. Hades admits the trick rows got him too.';
+  if(score<320) return 'Clean focus. Hades did a victory lap around the sofa; Lilith is copying your stare.';
+  return 'Flanker-Master. The flankers are furious. Hades and Lilith have officially adopted you as pack genius.';
+}
+/* CORE-END */
+var BEST_KEY='flankerMindBestV1';
+function loadBest(){ try{ return JSON.parse(localStorage.getItem(BEST_KEY)||'{"score":0,"level":0}'); }catch(e){ return {score:0,level:0}; } }
+function saveBest(b){ try{ localStorage.setItem(BEST_KEY, JSON.stringify(b)); }catch(e){} }
+
+/* iOS-hardened tap binding: pointerup fires reliably on iPhone touch where
+ * click synthesis can fail. click is kept as fallback for browsers that
+ * don't fire pointerup. The 150ms guard drops only the synthetic click that
+ * arrives as part of the SAME gesture (pointerup+click fire ~ms apart);
+ * genuine re-taps (>=150ms apart) always fire, so fast players never lose
+ * taps. (Refined 14 Oct 2026: the old 600ms all-event guard swallowed
+ * legitimate fast same-cell re-taps — caught by grid-mind's 2-agent
+ * headless playtest. The 10px slop still ignores scroll-drags.) */
+function onTap(el, fn) {
+  if (!el || typeof el.addEventListener !== 'function') return;
+  var lastFire = 0, dx0 = 0, dy0 = 0;
+  function fire(e) {
+    lastFire = Date.now();
+    fn(e);
+  }
+  el.addEventListener('pointerdown', function (e) { dx0 = e.clientX || 0; dy0 = e.clientY || 0; });
+  el.addEventListener('pointerup', function (e) {
+    var dx = (e.clientX || 0) - dx0, dy = (e.clientY || 0) - dy0;
+    if (dx * dx + dy * dy > 100) return;
+    fire(e);
+  });
+  el.addEventListener('click', function (e) {
+    if (Date.now() - lastFire < 150) return; /* same gesture's duplicate */
+    fire(e);
+  });
+}
+
+var G=null, timerId=null, fbTimer=null;
+function $(id){ return document.getElementById(id); }
+function setHud(){
+  $('hL').textContent=G?G.level:'–';
+  $('hH').textContent=G?G.lives:MAX_LIVES;
+  $('hS').textContent=G?G.score:0;
+  $('hB').textContent=loadBest().score;
+}
+function say(t){ $('verdict').textContent=t; }
+function clearTimers(){
+  if(timerId){ clearTimeout(timerId); timerId=null; }
+  if(fbTimer){ clearTimeout(fbTimer); fbTimer=null; }
+}
+function renderArrows(){
+  var html='', i, ch = G.dir==='L' ? '&#9664;' : '&#9654;',
+      fch = (G.incong ? (G.dir==='L'?'R':'L') : G.dir)==='L' ? '&#9664;' : '&#9654;';
+  for(i=0;i<7;i++){
+    if(i===3) html+='<span class="mid">'+ch+'</span>';
+    else html+='<span class="flank">'+fch+'</span>';
+  }
+  $('arrows').innerHTML=html;
+}
+function startTimer(){
+  var ms=levelMs(G.level), bar=$('timebar');
+  bar.style.transition='none'; bar.style.width='100%';
+  void bar.offsetWidth;
+  bar.style.transition='width '+ms+'ms linear'; bar.style.width='0%';
+  timerId=setTimeout(function(){ onAnswer(null); }, ms+40);
+}
+function flash(cls){
+  var a=$('arena'); a.classList.remove('good','bad'); void a.offsetWidth; a.classList.add(cls);
+}
+function nextTrial(){
+  if(!G || G.over) return;
+  clearTimers();
+  if(G.trialInLevel>=TRIALS_PER_LEVEL){
+    G.trialInLevel=0; G.level++;
+    say(['Level '+G.level+' — the bar moves faster. Eyes on the middle arrow.',
+         'Level '+G.level+'. The trick rows are coming thicker now.',
+         'Level '+G.level+'. Hades is watching your streak.'][G.level%3]);
+  }
+  G.dir=pickDir(Math.random); G.incong=pickIncong(Math.random);
+  G.trialInLevel++;
+  G.locked=false;
+  setHud(); renderArrows(); startTimer();
+  /* debug hook for automated playtests: read-only target */
+  window.FLANKER={dir:G.dir,incong:G.incong,level:G.level,score:G.score,lives:G.lives};
+}
+function onAnswer(choice){
+  if(!G || G.over || G.locked) return;
+  G.locked=true;
+  if(timerId){ clearTimeout(timerId); timerId=null; }
+  var correct = (choice!==null && choice===G.dir);
+  if(correct){
+    var pts=trialScore(G.streak, G.incong);
+    G.score+=pts; G.streak++;
+    flash('good');
+    if(G.incong && G.streak>=3) say('Trick row nailed — +'+pts+' (streak x'+G.streak+'). Lilith approves.');
+  } else {
+    G.lives--; G.streak=0; flash('bad');
+    say(choice===null ? 'Too slow! The bar ran out. ❤️ lost.' : 'Wrong way — the MIDDLE arrow, human. ❤️ lost.');
+  }
+  setHud();
+  if(G.lives<=0){ gameOver(); return; }
+  fbTimer=setTimeout(nextTrial, 340);
+}
+function gameOver(){
+  G.over=true; clearTimers();
+  var best=loadBest();
+  if(G.score>best.score){ best={score:G.score,level:G.level}; saveBest(best); }
+  setHud();
+  $('game').style.display='none';
+  $('gameover').style.display='block';
+  $('finalS').textContent=G.score;
+  $('finalL').textContent=G.level;
+  $('finalB').textContent=best.score;
+  say(verdictFor(G.score,G.level));
+}
+function startGame(){
+  clearTimers();
+  G={level:1,trialInLevel:0,score:0,lives:MAX_LIVES,streak:0,locked:true,over:false,dir:'L',incong:false};
+  var a=$('arena'); a.classList.remove('good','bad');
+  $('howto').style.display='none';
+  $('gameover').style.display='none';
+  $('game').style.display='block';
+  say('Eyes on the MIDDLE arrow. Tap ◀ or ▶.');
+  setHud(); nextTrial();
+}
+onTap($('startBtn'), startGame);
+onTap($('againBtn'), startGame);
+onTap($('btnL'), function(){ onAnswer('L'); });
+onTap($('btnR'), function(){ onAnswer('R'); });
+setHud();
+</script>
+</body>
+</html>
